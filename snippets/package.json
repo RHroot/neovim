@@ -1,0 +1,12 @@
+{
+  "name": "good-snippets",
+  "author": "sten",
+  "contributes": {
+    "snippets": [
+      {
+        "language": "go",
+        "path": "./go.json"
+      }
+    ]
+  }
+}
