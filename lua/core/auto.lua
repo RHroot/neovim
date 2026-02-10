@@ -91,31 +91,3 @@ vim.api.nvim_create_autocmd("CursorHold", {
 		})
 	end,
 })
-
--- Create a custom command :LiveServer
-vim.api.nvim_create_user_command("LiveServer", function()
-	local cwd = vim.fn.getcwd()
-	vim.fn.jobstart({ "live-server", "--port=8000", "--host=localhost" }, { cwd = cwd, detach = true })
-	print("🚀 Live Server born at http://localhost:8000")
-end, {})
-
-vim.api.nvim_create_user_command("LiveServerStop", function()
-	vim.fn.system("pkill -f live-server")
-	print("🛑 Live Server killed")
-end, {})
-
-vim.api.nvim_create_user_command("PyServer", function()
-	local cwd = vim.fn.getcwd()
-	vim.fn.jobstart({ "python", "-m", "http.server", "8000", "--directory", cwd }, { detach = true })
-	print("🚀 Python HTTP Server born at http://localhost:8000")
-end, {})
-
-vim.api.nvim_create_user_command("PyServerStop", function()
-	vim.fn.system("pkill -f 'python -m http.server'")
-	print("🛑 Python HTTP Server killed")
-end, {})
-
-vim.api.nvim_create_autocmd("BufWritePost", {
-	pattern = vim.fn.expand("$HOME/.config/kitty/kitty.conf"),
-	command = "silent !kill -SIGUSR1 $(pgrep kitty)",
-})
