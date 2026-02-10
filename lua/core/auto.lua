@@ -1,3 +1,6 @@
+-----------------------------------------------------------
+-- Yank highlight
+-----------------------------------------------------------
 vim.api.nvim_create_autocmd("TextYankPost", {
 	group = vim.api.nvim_create_augroup("highlight-yank", { clear = true }),
 	callback = function()
@@ -5,46 +8,84 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 	end,
 })
 
+-----------------------------------------------------------
+-- Black background theme (TokyoNight-safe)
+-----------------------------------------------------------
+local BLACK = "#000000"
+
+local function apply_black_theme()
+	-- Core
+	vim.api.nvim_set_hl(0, "Normal", { bg = BLACK })
+	vim.api.nvim_set_hl(0, "NormalNC", { bg = BLACK })
+	vim.api.nvim_set_hl(0, "EndOfBuffer", { bg = BLACK })
+	vim.api.nvim_set_hl(0, "SignColumn", { bg = BLACK })
+
+	-- Line numbers
+	vim.api.nvim_set_hl(0, "LineNr", {
+		fg = "#4a4a4a",
+		bg = BLACK,
+	})
+	vim.api.nvim_set_hl(0, "CursorLineNr", {
+		fg = "#fffacd",
+		bg = BLACK,
+		bold = true,
+	})
+
+	-- Floats
+	vim.api.nvim_set_hl(0, "NormalFloat", { bg = BLACK })
+	vim.api.nvim_set_hl(0, "FloatBorder", { bg = BLACK })
+
+	-- Diagnostic floats
+	vim.api.nvim_set_hl(0, "DiagnosticFloatingError", { bg = BLACK })
+	vim.api.nvim_set_hl(0, "DiagnosticFloatingWarn", { bg = BLACK })
+	vim.api.nvim_set_hl(0, "DiagnosticFloatingInfo", { bg = BLACK })
+	vim.api.nvim_set_hl(0, "DiagnosticFloatingHint", { bg = BLACK })
+end
+
+-----------------------------------------------------------
+-- Apply only to real code buffers
+-----------------------------------------------------------
+local function is_code_buffer(buf)
+	return vim.bo[buf].buftype == ""
+end
+
+-----------------------------------------------------------
+-- Autocommands (robust + race-free)
+-----------------------------------------------------------
 vim.api.nvim_create_autocmd("ColorScheme", {
-	callback = function()
-		local black = "#000000"
+	callback = apply_black_theme,
+})
 
-		vim.api.nvim_set_hl(0, "Normal", { bg = black })
-		vim.api.nvim_set_hl(0, "NormalNC", { bg = black })
-		vim.api.nvim_set_hl(0, "NormalFloat", { bg = black })
-		vim.api.nvim_set_hl(0, "EndOfBuffer", { bg = black })
-		vim.api.nvim_set_hl(0, "SignColumn", { bg = black })
-		vim.api.nvim_set_hl(0, "FloatBorder", { bg = black })
-
-		vim.api.nvim_set_hl(0, "DiagnosticFloatingError", { bg = black })
-		vim.api.nvim_set_hl(0, "DiagnosticFloatingWarn", { bg = black })
-		vim.api.nvim_set_hl(0, "DiagnosticFloatingInfo", { bg = black })
-		vim.api.nvim_set_hl(0, "DiagnosticFloatingHint", { bg = black })
-
-		vim.api.nvim_set_hl(0, "LineNr", {
-			fg = "#4a4a4a",
-			bg = black,
-		})
-
-		vim.api.nvim_set_hl(0, "CursorLineNr", {
-			fg = "#fffacd",
-			bg = black,
-			bold = true,
-		})
+vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
+	callback = function(ev)
+		if is_code_buffer(ev.buf) then
+			apply_black_theme()
+		end
 	end,
 })
 
--- Create a single LspAttach autocmd for keymaps + completion
+-- Ensure startup correctness even if colorscheme loads first
+vim.api.nvim_create_autocmd("VimEnter", {
+	callback = function()
+		vim.cmd("doautocmd ColorScheme")
+	end,
+})
+
+-----------------------------------------------------------
+-- LSP keymaps
+-----------------------------------------------------------
 local lsp_group = vim.api.nvim_create_augroup("lsp-attach", { clear = true })
+
 vim.api.nvim_create_autocmd("LspAttach", {
 	group = lsp_group,
 	callback = function(ev)
 		local buf = ev.buf
+
 		local function map(mode, lhs, rhs, desc)
 			vim.keymap.set(mode, lhs, rhs, { buffer = buf, desc = desc })
 		end
 
-		-- ===== LSP Navigation & Actions =====
+		-- Navigation
 		map("n", "gd", vim.lsp.buf.definition, "Go to definition")
 		map("n", "gr", vim.lsp.buf.references, "Find references")
 		map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
@@ -67,17 +108,20 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		end, "Format buffer")
 
 		-- Diagnostics
-		map("n", "<leader>fe", vim.diagnostic.open_float, "Show diagnostics in float")
-		map("n", "<leader>ce", vim.diagnostic.setqflist, "Send diagnostics to quickfix")
+		map("n", "<leader>fe", vim.diagnostic.open_float, "Show diagnostics")
+		map("n", "<leader>ce", vim.diagnostic.setqflist, "Diagnostics to quickfix")
 	end,
 })
 
+-----------------------------------------------------------
+-- Diagnostics config
+-----------------------------------------------------------
 vim.diagnostic.config({
+	virtual_text = false,
 	virtual_line = {
 		only_current_line = true,
 		severity = { min = vim.diagnostic.severity.WARN },
 	},
-	virtual_text = false,
 	underline = true,
 	severity_sort = true,
 	update_in_insert = false,
@@ -98,6 +142,9 @@ vim.diagnostic.config({
 	},
 })
 
+-----------------------------------------------------------
+-- CursorHold diagnostics (non-spammy)
+-----------------------------------------------------------
 vim.api.nvim_create_autocmd("CursorHold", {
 	callback = function()
 		if vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })[1] then
