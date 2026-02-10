@@ -1,19 +1,36 @@
 vim.api.nvim_create_autocmd("TextYankPost", {
-	desc = "Highlight when yanking (copying) text",
 	group = vim.api.nvim_create_augroup("highlight-yank", { clear = true }),
 	callback = function()
-		vim.hl.on_yank()
+		vim.hl.on_yank({ timeout = 120 })
 	end,
 })
 
 vim.api.nvim_create_autocmd("ColorScheme", {
 	callback = function()
-		vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
-		vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
-		vim.api.nvim_set_hl(0, "NormalNC", { bg = "none" })
-		vim.api.nvim_set_hl(0, "LineNr", { fg = "#4a4a4a", bg = "none" })
-		vim.api.nvim_set_hl(0, "SignColumn", { bg = "none" })
-		vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#fffacd", bg = "none", bold = true })
+		local black = "#000000"
+
+		vim.api.nvim_set_hl(0, "Normal", { bg = black })
+		vim.api.nvim_set_hl(0, "NormalNC", { bg = black })
+		vim.api.nvim_set_hl(0, "NormalFloat", { bg = black })
+		vim.api.nvim_set_hl(0, "EndOfBuffer", { bg = black })
+		vim.api.nvim_set_hl(0, "SignColumn", { bg = black })
+		vim.api.nvim_set_hl(0, "FloatBorder", { bg = black })
+
+		vim.api.nvim_set_hl(0, "DiagnosticFloatingError", { bg = black })
+		vim.api.nvim_set_hl(0, "DiagnosticFloatingWarn", { bg = black })
+		vim.api.nvim_set_hl(0, "DiagnosticFloatingInfo", { bg = black })
+		vim.api.nvim_set_hl(0, "DiagnosticFloatingHint", { bg = black })
+
+		vim.api.nvim_set_hl(0, "LineNr", {
+			fg = "#4a4a4a",
+			bg = black,
+		})
+
+		vim.api.nvim_set_hl(0, "CursorLineNr", {
+			fg = "#fffacd",
+			bg = black,
+			bold = true,
+		})
 	end,
 })
 
@@ -31,8 +48,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		map("n", "gd", vim.lsp.buf.definition, "Go to definition")
 		map("n", "gr", vim.lsp.buf.references, "Find references")
 		map("n", "gi", vim.lsp.buf.implementation, "Go to implementation")
-		map("n", "gk", vim.lsp.buf.hover, "Hover documentation")
-		map("n", "<C-S-k>", vim.lsp.buf.signature_help, "Signature help")
+		map("n", "K", vim.lsp.buf.hover, "Hover documentation")
+		map("n", "<C-k>", vim.lsp.buf.signature_help, "Signature help")
 
 		-- Workspace
 		map("n", "<leader>aw", vim.lsp.buf.add_workspace_folder, "Add workspace folder")
@@ -83,11 +100,13 @@ vim.diagnostic.config({
 
 vim.api.nvim_create_autocmd("CursorHold", {
 	callback = function()
-		vim.diagnostic.open_float(nil, {
-			focusable = false,
-			close_events = { "BufLeave", "CursorMoved", "InsertEnter" },
-			border = "rounded",
-			source = "if_many",
-		})
+		if vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })[1] then
+			vim.diagnostic.open_float(nil, {
+				focusable = false,
+				close_events = { "BufLeave", "CursorMoved", "InsertEnter" },
+				border = "rounded",
+				source = "if_many",
+			})
+		end
 	end,
 })

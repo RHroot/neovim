@@ -25,10 +25,9 @@ vim.o.sidescroll = 1
 vim.o.ignorecase = true
 vim.o.smartcase = true
 
-vim.o.updatetime = 300
 vim.o.timeout = true
 vim.o.timeoutlen = 500
-vim.o.updatetime = 300
+vim.o.updatetime = 250
 
 vim.o.swapfile = false
 vim.o.backup = false
