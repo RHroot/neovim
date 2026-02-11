@@ -54,7 +54,7 @@ Plug("folke/which-key.nvim")
 Plug("windwp/nvim-autopairs")
 
 -- NOTE: TreeSitter
-Plug("nvim-treesitter/nvim-treesitter", { ["do"] = ":TSUpdate" })
+Plug("nvim-treesitter/nvim-treesitter", { ["tag"] = "v0.9.2", ["do"] = ":TSUpdate" })
 
 -- NOTE: Icons
 Plug("nvim-tree/nvim-web-devicons")
