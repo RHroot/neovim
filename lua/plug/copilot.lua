@@ -11,12 +11,12 @@ vim.g.copilot_no_tab_map = true
 
 -- === For CopilotC-Nvim/CopilotChat.nvim ===
 require("CopilotChat").setup({
-	model = "gpt-5.1", -- AI model to use
-	temperature = 0.1, -- Lower = focused, higher = creative
+	model = "claude-sonnet-4.5", -- AI model to use
+	temperature = 0.5, -- Lower = focused, higher = creative
 	auto_insert_mode = true,
 	window = {
 		layout = "float",
-		width = 80, -- Fixed width in columns
+		width = 90, -- Fixed width in columns
 		height = 20, -- Fixed height in rows
 		border = "rounded", -- 'single', 'double', 'rounded', 'solid'
 		title = "🤖 AI Assistant",
