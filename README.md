@@ -4,7 +4,7 @@
 
 **A fast, minimal, and beautiful Neovim configuration**
 
-Built with [vim-plug](https://github.com/junegunn/vim-plug) · Lua-first · 14 LSP servers · 16+ formatters · AI-powered
+Built with [lazy.nvim](https://github.com/folke/lazy.nvim) · Lua-first · 14 LSP servers · 16+ formatters · AI-powered
 
 ![Neovim](https://img.shields.io/badge/Neovim-0.10%2B-57A143?style=for-the-badge&logo=neovim&logoColor=white)
 ![Lua](https://img.shields.io/badge/Lua-2C2D72?style=for-the-badge&logo=lua&logoColor=white)
@@ -27,6 +27,8 @@ Built with [vim-plug](https://github.com/junegunn/vim-plug) · Lua-first · 14 L
 - ⚡ **Blink.cmp** — fast, PyCharm-style completion with snippet support
 - 🔒 **Cloak.nvim** — hide secrets in `.env` files
 - 🖼️ **Image preview** support (PNG, JPG, GIF, WebP, and more)
+- ✂️ **LuaSnip + friendly-snippets** with custom snippets support
+- 🔔 **nvim-notify** for LSP events and rich alerts
 
 ---
 
@@ -35,14 +37,13 @@ Built with [vim-plug](https://github.com/junegunn/vim-plug) · Lua-first · 14 L
 ```
 ~/.config/nvim/
 ├── init.lua              # Entry point — loads core modules and plugins
-├── autoload/
-│   └── plug.vim          # vim-plug plugin manager
+├── lazy-lock.json        # Lazy.nvim lockfile
 ├── lua/
 │   ├── core/
 │   │   ├── auto.lua      # Autocommands, LSP keybinds, diagnostics, custom commands
 │   │   ├── maps.lua      # Key mappings (leader = Space)
 │   │   └── opts.lua      # Editor options (tabs, search, UI, font)
-│   └── plug/
+│   └── plugins/
 │       ├── autopairs.lua # Auto bracket/quote pairing
 │       ├── cloak.lua     # Environment variable masking
 │       ├── cmd.lua       # Noice command UI config
@@ -95,7 +96,7 @@ nvim
 On first launch, run:
 
 ```vim
-:PlugInstall
+:Lazy
 ```
 
 **4. Install LSP servers, formatters, and tools**
@@ -164,6 +165,7 @@ You'll need the following tools available on your `$PATH`. Install them with you
 | `<leader>q`  | Normal | Quit                       |
 | `<leader>ex` | Normal | Force quit                 |
 | `<leader>so` | Normal | Save & source current file |
+| `<leader>si` | Normal | Source `init.lua`          |
 | `<Esc>`      | Normal | Clear search highlights    |
 
 ### Navigation
@@ -179,12 +181,14 @@ You'll need the following tools available on your `$PATH`. Install them with you
 
 | Key                         | Mode   | Action                   |
 | --------------------------- | ------ | ------------------------ |
-| `<leader>e`                 | Normal | Toggle file explorer     |
-| `<leader>cd`                | Normal | Open netrw (current dir) |
-| `<leader>,`                 | Normal | Open buffer list         |
-| `<leader>bn` / `<leader>bp` | Normal | Next/previous buffer     |
-| `<leader>bd`                | Normal | Delete buffer            |
-| `<leader>bc`                | Normal | New buffer               |
+| `<leader>e`                 | Normal | Toggle file explorer      |
+| `<leader>cd`                | Normal | Open netrw (current dir)  |
+| `<leader>,`                 | Normal | Open buffer list          |
+| `<leader>bn` / `<leader>bp` | Normal | Next/previous buffer      |
+| `<leader>bd`                | Normal | Delete buffer             |
+| `<leader>bc`                | Normal | New buffer                |
+| `<leader>.`                 | Normal | Open scratch buffer       |
+| `<leader>S`                 | Normal | Select scratch buffer     |
 
 ### Fuzzy Finder (Snacks Picker)
 
@@ -198,6 +202,7 @@ You'll need the following tools available on your `$PATH`. Install them with you
 | `<leader>:`       | Normal | Command history   |
 | `<leader>sh`      | Normal | Help tags         |
 | `<leader>sk`      | Normal | Keymaps           |
+| `<leader>fp`      | Normal | Projects          |
 
 ### LSP
 
@@ -206,11 +211,13 @@ You'll need the following tools available on your `$PATH`. Install them with you
 | `gd`         | Normal        | Go to definition        |
 | `gr`         | Normal        | Find references         |
 | `gi`         | Normal        | Go to implementation    |
-| `gk`         | Normal        | Hover documentation     |
+| `K`          | Normal        | Hover documentation     |
+| `<C-k>`      | Normal        | Signature help          |
 | `<leader>ca` | Normal        | Code action             |
 | `<leader>rn` | Normal        | Rename symbol           |
 | `<leader>fe` | Normal        | Diagnostics float       |
 | `<leader>fm` | Normal/Visual | Format buffer/selection |
+| `<leader>for`| Normal        | Format buffer (async)   |
 
 ### Git
 
@@ -222,6 +229,8 @@ You'll need the following tools available on your `$PATH`. Install them with you
 | `<leader>gs` | Normal | Git status                   |
 | `<leader>gd` | Normal | Git diff                     |
 | `<leader>gB` | Normal | Git browse (open in browser) |
+| `<leader>gS` | Normal | Git stash                    |
+| `<leader>gf` | Normal | Git file history             |
 
 ### AI (Copilot)
 
@@ -234,13 +243,21 @@ You'll need the following tools available on your `$PATH`. Install them with you
 
 | Key          | Mode   | Action             |
 | ------------ | ------ | ------------------ |
-| `<leader>us` | Normal | Toggle spell check |
-| `<leader>uw` | Normal | Toggle word wrap   |
-| `<leader>ud` | Normal | Toggle diagnostics |
-| `<leader>uh` | Normal | Toggle inlay hints |
-| `<leader>uz` | Normal | Toggle zen mode    |
-| `<leader>uZ` | Normal | Toggle zoom        |
-| `<leader>uC` | Normal | Pick colorscheme   |
+| `<leader>us` | Normal | Toggle spell check   |
+| `<leader>uw` | Normal | Toggle word wrap     |
+| `<leader>ud` | Normal | Toggle diagnostics   |
+| `<leader>uh` | Normal | Toggle inlay hints   |
+| `<leader>uz` | Normal | Toggle zen mode      |
+| `<leader>uZ` | Normal | Toggle zoom          |
+| `<leader>uC` | Normal | Pick colorscheme     |
+| `<leader>ub` | Normal | Toggle dark mode     |
+| `<leader>uT` | Normal | Toggle Treesitter    |
+| `<leader>uD` | Normal | Toggle dim mode      |
+| `<leader>uL` | Normal | Toggle relative line |
+| `<leader>ul` | Normal | Toggle line numbers  |
+| `<leader>uN` | Normal | Toggle line number   |
+| `<leader>uc` | Normal | Toggle conceal       |
+| `<leader>ug` | Normal | Toggle indent guides |
 
 ### Editing
 
@@ -251,6 +268,9 @@ You'll need the following tools available on your `$PATH`. Install them with you
 | `<leader>d` | Normal/Visual | Delete to void register         |
 | `<leader>p` | Visual        | Paste without yanking selection |
 | `<C-_>`     | Normal/Visual | Toggle comment                  |
+| `<C-n>`     | Insert/Select | Snippet jump forward            |
+| `<C-p>`     | Insert/Select | Snippet jump backward           |
+| `<C-e>`     | Insert/Select | Cycle snippet choice            |
 
 ---
 
@@ -264,30 +284,27 @@ You'll need the following tools available on your `$PATH`. Install them with you
 
 ## 🛠️ Custom Commands
 
-| Command           | Description                             |
-| ----------------- | --------------------------------------- |
-| `:LiveServer`     | Start a live-server on port 8000        |
-| `:LiveServerStop` | Stop the live-server                    |
-| `:PyServer`       | Start a Python HTTP server on port 8000 |
-| `:PyServerStop`   | Stop the Python HTTP server             |
+| Command        | Description                |
+| -------------- | -------------------------- |
+| `:ConformInfo` | Show Conform formatter info |
 
 ---
 
 ## 🔧 Customization
 
-- **Add plugins** — Edit `init.lua` and add `Plug("author/plugin")` between `plug#begin` and `plug#end`, then create a config file in `lua/plug/`
-- **Change colorscheme** — Edit `lua/plug/colors.lua` or press `<leader>uC` to pick one live
+- **Add plugins** — Create a plugin spec in `lua/plugins/` and add it to the lazy loader
+- **Change colorscheme** — Edit `lua/plugins/colors.lua` or press `<leader>uC` to pick one live
 - **Add keybindings** — Edit `lua/core/maps.lua`
-- **Add formatters** — Edit `lua/plug/formatter.lua` (Conform format)
-- **Add LSP servers** — Edit `lua/plug/lsp-cmp.lua` and add the server name to the `servers` table
+- **Add formatters** — Edit `lua/plugins/formatter.lua` (Conform format)
+- **Add LSP servers** — Edit `lua/plugins/lsp-cmp.lua` and add the server name to `vim.lsp.enable`
 - **Add snippets** — Create a JSON file in `snippets/` and register it in `snippets/package.json`
 
 ---
 
 ## 📝 Notes
 
-- **First launch** will show warnings about missing plugins — just run `:PlugInstall` and restart
-- **vim-plug** is bundled in `autoload/plug.vim` — no separate installation needed
+- **First launch** will show warnings about missing plugins — open `:Lazy` and sync
+- **lazy.nvim** is bootstrapped automatically in `init.lua` — no separate installation needed
 - The config auto-reloads Kitty terminal config on save
 - Swap files are disabled; persistent undo is stored in `~/.vim/undodir`
 - Neovide is supported with custom font and opacity settings
