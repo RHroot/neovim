@@ -8,7 +8,7 @@ return {
 	},
 	{
 		"nvim-mini/mini.icons",
-		lazy = true,
+		lazy = false,
 		config = function()
 			require("mini.icons").setup()
 		end,
