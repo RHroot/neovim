@@ -1,7 +1,7 @@
 return {
 	{
 		"github/copilot.vim",
-		event = "InsertEnter",
+		lazy = false,
 		config = function()
 			vim.g.copilot_settings = {
 				selectedCompletionModel = "gpt-4o-copilot",
