@@ -7,7 +7,7 @@ local opts = { noremap = true, silent = false }
 
 -- General
 map({ "n", "i", "v", "c", "t", "x", "s", "o" }, "<C-c>", "<Esc>", opts)
-map({ "n", "v", "c", "t", "x", "s", "o" }, ";", ":", opts)
+map({ "n", "v", "x" }, ";", ":", opts)
 map("n", "<C-_>", "gcc", { remap = true, desc = "Toggle comment" })
 map({ "v", "c", "t", "x", "s", "o" }, "<C-_>", "gc", { remap = true, desc = "Toggle comment" })
 map("n", "<leader>cd", ":Explore<CR>", opts)
