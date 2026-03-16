@@ -6,7 +6,7 @@ return {
 
 		vim.g.copilot_settings = {
 			selectedCompletionModel = "gpt-4o-copilot",
-			debounce_ms = 75, -- default ~150
+			debounce_ms = 75,
 		}
 
 		-- Accept suggestion

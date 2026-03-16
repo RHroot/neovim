@@ -26,7 +26,7 @@ local function apply_black_theme()
 		bg = BLACK,
 	})
 	vim.api.nvim_set_hl(0, "CursorLineNr", {
-		fg = "#fffacd",
+		fg = "#F09676",
 		bg = BLACK,
 		bold = true,
 	})

@@ -1,10 +1,9 @@
 return {
 	"nvim-treesitter/nvim-treesitter",
-	version = "v0.9.2",
 	build = ":TSUpdate",
 	event = { "BufReadPre", "BufNewFile" },
 	config = function()
-		require("nvim-treesitter.configs").setup({
+		require("nvim-treesitter").setup({
 			install = {
 				compilers = { "clang", "gcc" },
 				prefer_git = true,
