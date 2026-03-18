@@ -38,6 +38,7 @@ Built with [lazy.nvim](https://github.com/folke/lazy.nvim) · Lua-first · 14 LS
 ~/.config/nvim/
 ├── init.lua              # Entry point — loads core modules and plugins
 ├── lazy-lock.json        # Lazy.nvim lockfile
+├── .luarc.json           # Lua language server configuration
 ├── lua/
 │   ├── core/
 │   │   ├── auto.lua      # Autocommands, LSP keybinds, diagnostics, custom commands
@@ -45,10 +46,10 @@ Built with [lazy.nvim](https://github.com/folke/lazy.nvim) · Lua-first · 14 LS
 │   │   └── opts.lua      # Editor options (tabs, search, UI, font)
 │   └── plugins/
 │       ├── autopairs.lua # Auto bracket/quote pairing
+│       ├── chatcopilot.lua # CopilotChat configuration
 │       ├── cloak.lua     # Environment variable masking
-│       ├── cmd.lua       # Noice command UI config
 │       ├── colors.lua    # Tokyo Night colorscheme
-│       ├── copilot.lua   # GitHub Copilot + CopilotChat
+│       ├── copilot.lua   # GitHub Copilot configuration
 │       ├── formatter.lua # Conform formatter config (16+ languages)
 │       ├── git.lua       # Gitsigns config
 │       ├── lsp-cmp.lua   # LSP servers + Blink.cmp completion
