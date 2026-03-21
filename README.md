@@ -186,14 +186,14 @@ You'll need the following tools available on your `$PATH`. Install them with you
 
 | Key                         | Mode   | Action                   |
 | --------------------------- | ------ | ------------------------ |
-| `<leader>e`                 | Normal | Toggle file explorer      |
-| `<leader>cd`                | Normal | Open netrw (current dir)  |
-| `<leader>,`                 | Normal | Open buffer list          |
-| `<leader>bn` / `<leader>bp` | Normal | Next/previous buffer      |
-| `<leader>bd`                | Normal | Delete buffer             |
-| `<leader>bc`                | Normal | New buffer                |
-| `<leader>.`                 | Normal | Open scratch buffer       |
-| `<leader>S`                 | Normal | Select scratch buffer     |
+| `<leader>e`                 | Normal | Toggle file explorer     |
+| `<leader>cd`                | Normal | Open netrw (current dir) |
+| `<leader>,`                 | Normal | Open buffer list         |
+| `<leader>bn` / `<leader>bp` | Normal | Next/previous buffer     |
+| `<leader>bd`                | Normal | Delete buffer            |
+| `<leader>bc`                | Normal | New buffer               |
+| `<leader>.`                 | Normal | Open scratch buffer      |
+| `<leader>S`                 | Normal | Select scratch buffer    |
 
 ### Fuzzy Finder (Snacks Picker)
 
@@ -211,18 +211,18 @@ You'll need the following tools available on your `$PATH`. Install them with you
 
 ### LSP
 
-| Key          | Mode          | Action                  |
-| ------------ | ------------- | ----------------------- |
-| `gd`         | Normal        | Go to definition        |
-| `gr`         | Normal        | Find references         |
-| `gi`         | Normal        | Go to implementation    |
-| `K`          | Normal        | Hover documentation     |
-| `<C-k>`      | Normal        | Signature help          |
-| `<leader>ca` | Normal        | Code action             |
-| `<leader>rn` | Normal        | Rename symbol           |
-| `<leader>fe` | Normal        | Diagnostics float       |
-| `<leader>fm` | Normal/Visual | Format buffer/selection |
-| `<leader>for`| Normal        | Format buffer (async)   |
+| Key           | Mode          | Action                  |
+| ------------- | ------------- | ----------------------- |
+| `gd`          | Normal        | Go to definition        |
+| `gr`          | Normal        | Find references         |
+| `gi`          | Normal        | Go to implementation    |
+| `K`           | Normal        | Hover documentation     |
+| `<C-k>`       | Normal        | Signature help          |
+| `<leader>ca`  | Normal        | Code action             |
+| `<leader>rn`  | Normal        | Rename symbol           |
+| `<leader>fe`  | Normal        | Diagnostics float       |
+| `<leader>fm`  | Normal/Visual | Format buffer/selection |
+| `<leader>for` | Normal        | Format buffer (async)   |
 
 ### Git
 
@@ -246,8 +246,8 @@ You'll need the following tools available on your `$PATH`. Install them with you
 
 ### Toggles
 
-| Key          | Mode   | Action             |
-| ------------ | ------ | ------------------ |
+| Key          | Mode   | Action               |
+| ------------ | ------ | -------------------- |
 | `<leader>us` | Normal | Toggle spell check   |
 | `<leader>uw` | Normal | Toggle word wrap     |
 | `<leader>ud` | Normal | Toggle diagnostics   |
@@ -281,13 +281,12 @@ You'll need the following tools available on your `$PATH`. Install them with you
 
 ## 🎨 Screenshots
 
-
 ---
 
 ## 🛠️ Custom Commands
 
-| Command        | Description                |
-| -------------- | -------------------------- |
+| Command        | Description                 |
+| -------------- | --------------------------- |
 | `:ConformInfo` | Show Conform formatter info |
 
 ---
