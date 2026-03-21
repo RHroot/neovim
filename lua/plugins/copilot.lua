@@ -5,8 +5,8 @@ return {
 		vim.g.copilot_no_tab_map = true
 
 		vim.g.copilot_settings = {
-			selectedCompletionModel = "gpt-4o-copilot",
-			debounce_ms = 75,
+			selectedCompletionModel = "copilot-codex",
+			debounce_ms = 20,
 		}
 
 		-- Accept suggestion
