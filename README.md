@@ -16,19 +16,22 @@ Built with [lazy.nvim](https://github.com/folke/lazy.nvim) · Lua-first · 14 LS
 
 ## ✨ Features
 
-- 🎨 **Tokyo Night** colorscheme with transparent backgrounds
-- 🧠 **14 LSP servers** — Go, Python, Rust, TypeScript, C/C++, Java, Lua, Zig, HTML/CSS, SQL, and more
-- 🤖 **GitHub Copilot + CopilotChat** for AI-assisted coding
-- 📐 **Conform.nvim** formatting for 16+ languages
-- 🔍 **Snacks.nvim** — fuzzy finder, file explorer, lazygit, zen mode, dashboard, and more
-- 🌳 **Treesitter** syntax highlighting with auto-install
-- 📊 **Mini.nvim** — statusline, indent highlights, text objects, hex color previews
-- 🔔 **Noice.nvim** — modern command UI and notifications
-- ⚡ **Blink.cmp** — fast, PyCharm-style completion with snippet support
-- 🔒 **Cloak.nvim** — hide secrets in `.env` files
-- 🖼️ **Image preview** support (PNG, JPG, GIF, WebP, and more)
-- ✂️ **LuaSnip + friendly-snippets** with custom snippets support
-- 🔔 **nvim-notify** for LSP events and rich alerts
+- 🎨 **Tokyo Night** colorscheme with transparent backgrounds and Neovide support
+- 🧠 **LSP support** — Go, Python, Rust, TypeScript, Lua, C/C++, Java, HTML, CSS, Tailwind, SQL, Zig
+- 🤖 **GitHub Copilot + CopilotChat** — AI-assisted coding with inline suggestions and interactive chat
+- 📐 **Conform.nvim** — Code formatting for 16+ languages (Lua, Python, JavaScript, Go, Rust, C/C++, Shell, etc.)
+- 🔍 **Snacks.nvim** — Fuzzy finder, file explorer, lazygit integration, zen mode, and dashboard
+- 🌳 **Treesitter** — Syntax highlighting with automatic parser installation
+- 📊 **Mini.nvim** — Lightweight statusline, indent guides, text objects, and color previews
+- 💬 **which-key** — Keymap discovery and command hints popup
+- ⚡ **Blink.cmp** — Fast, PyCharm-style completion with snippet support and context-aware suggestions
+- 🔒 **Cloak.nvim** — Hide sensitive data (env variables, secrets) in `.env` files
+- 🖼️ **Image preview** — Preview PNG, JPG, GIF, WebP inline
+- ✂️ **LuaSnip + friendly-snippets** — Built-in snippets with custom Go snippets (main, println)
+- 🔔 **nvim-notify** — Non-intrusive notifications for LSP events and diagnostics
+- 🪓 **Auto-pairing** — Automatic bracket, quote, and tag pairing
+- 📝 **Git integration** — Gitsigns for inline git blame and diffs
+- ⚙️ **Neovide support** — Custom font, opacity, and padding settings for GUI Neovim
 
 ---
 
@@ -36,31 +39,32 @@ Built with [lazy.nvim](https://github.com/folke/lazy.nvim) · Lua-first · 14 LS
 
 ```
 ~/.config/nvim/
-├── init.lua              # Entry point — loads core modules and plugins
-├── lazy-lock.json        # Lazy.nvim lockfile
+├── init.lua              # Entry point — bootstraps lazy.nvim and loads modules
+├── lazy-lock.json        # Lazy.nvim lockfile (plugin versions)
 ├── .luarc.json           # Lua language server configuration
 ├── lua/
 │   ├── core/
 │   │   ├── auto.lua      # Autocommands, LSP keybinds, diagnostics, custom commands
 │   │   ├── maps.lua      # Key mappings (leader = Space)
-│   │   └── opts.lua      # Editor options (tabs, search, UI, font)
+│   │   └── opts.lua      # Editor options (indentation, search, UI, fonts, Neovide settings)
 │   └── plugins/
-│       ├── autopairs.lua # Auto bracket/quote pairing
-│       ├── chatcopilot.lua # CopilotChat configuration
-│       ├── cloak.lua     # Environment variable masking
-│       ├── colors.lua    # Tokyo Night colorscheme
-│       ├── copilot.lua   # GitHub Copilot configuration
-│       ├── formatter.lua # Conform formatter config (16+ languages)
-│       ├── git.lua       # Gitsigns config
-│       ├── lsp-cmp.lua   # LSP servers + Blink.cmp completion
-│       ├── mini.lua      # Mini statusline, hi-patterns, ai, icons
-│       ├── notify.lua    # Notification system
-│       ├── snacks.lua    # Fuzzy finder, explorer, lazygit, zen, dashboard
-│       ├── treesitter.lua# Syntax highlighting
-│       └── whichkey.lua  # Keymap discovery popup
+│       ├── autopairs.lua       # Auto bracket/quote pairing (nvim-autopairs)
+│       ├── chatcopilot.lua     # CopilotChat configuration
+│       ├── cloak.lua           # Environment variable masking (cloak.nvim)
+│       ├── colors.lua          # Tokyo Night colorscheme
+│       ├── completion.lua      # Blink.cmp completion with snippet support
+│       ├── copilot.lua         # GitHub Copilot configuration
+│       ├── formatter.lua       # Conform formatter config (16+ languages)
+│       ├── git.lua             # Gitsigns integration
+│       ├── lsp.lua             # LSP server configuration
+│       ├── mini.lua            # Mini.nvim modules (statusline, icons, AI, text objects)
+│       ├── notify.lua          # nvim-notify notifications
+│       ├── snacks.nvim         # Snacks.nvim (fuzzy finder, explorer, lazygit, zen, dashboard)
+│       ├── treesitter.lua      # Treesitter syntax highlighting
+│       └── whichkey.lua        # which-key keymap discovery
 └── snippets/
-    ├── package.json      # Snippet manifest
-    └── go.json           # Custom Go snippets
+    ├── package.json      # Snippet manifest (registers snippet files)
+    └── go.json           # Custom Go snippets (main function, println)
 ```
 
 ---
@@ -293,22 +297,27 @@ You'll need the following tools available on your `$PATH`. Install them with you
 
 ## 🔧 Customization
 
-- **Add plugins** — Create a plugin spec in `lua/plugins/` and add it to the lazy loader
-- **Change colorscheme** — Edit `lua/plugins/colors.lua` or press `<leader>uC` to pick one live
-- **Add keybindings** — Edit `lua/core/maps.lua`
-- **Add formatters** — Edit `lua/plugins/formatter.lua` (Conform format)
-- **Add LSP servers** — Edit `lua/plugins/lsp-cmp.lua` and add the server name to `vim.lsp.enable`
-- **Add snippets** — Create a JSON file in `snippets/` and register it in `snippets/package.json`
+- **Add plugins** — Create a plugin spec in `lua/plugins/` with a lazy.nvim spec table and it will auto-load
+- **Change colorscheme** — Edit `lua/plugins/colors.lua` or press `<leader>uC` at runtime to pick one
+- **Add keybindings** — Edit `lua/core/maps.lua` (core mappings) or individual plugin files
+- **Add formatters** — Edit `lua/plugins/formatter.lua` and configure with Conform language specs
+- **Add LSP servers** — Edit `lua/plugins/lsp.lua`, add server config to the servers table
+- **Add snippets** — Create a JSON file in `snippets/`, register it in `snippets/package.json`
+- **Editor settings** — Modify `lua/core/opts.lua` for tabs, search, UI, fonts, and Neovide options
+- **Autocommands** — Add custom autocommands in `lua/core/auto.lua`
 
 ---
 
 ## 📝 Notes
 
-- **First launch** will show warnings about missing plugins — open `:Lazy` and sync
-- **lazy.nvim** is bootstrapped automatically in `init.lua` — no separate installation needed
-- The config auto-reloads Kitty terminal config on save
-- Swap files are disabled; persistent undo is stored in `~/.vim/undodir`
-- Neovide is supported with custom font and opacity settings
+- **First launch** will download and install all plugins from the lazy-lock.json — open `:Lazy` to manage
+- **lazy.nvim** is bootstrapped automatically in `init.lua` — no manual installation needed
+- **Swap files** are disabled; persistent undo is stored in `~/.vim/undodir`
+- **Tab size** is set to 2 spaces (configurable in `lua/core/opts.lua`)
+- **Neovide support** includes custom fonts (FiraCode Nerd Font Mono), opacity (0.5), and padding
+- **LSP autostart** is enabled for supported filetypes
+- **Spell check** can be toggled with `<leader>us`
+- **Diagnostics** can be toggled with `<leader>ud` and shown in float with `<leader>fe`
 
 ---
 
