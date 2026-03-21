@@ -281,9 +281,6 @@ You'll need the following tools available on your `$PATH`. Install them with you
 
 ## 🎨 Screenshots
 
-> Add your own screenshots here!
->
-> Suggested: dashboard, editor with LSP, fuzzy finder, lazygit, zen mode
 
 ---
 
