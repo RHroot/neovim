@@ -296,6 +296,6 @@ You'll need the following tools available on your `$PATH`. Install them with you
 
 <div align="center">
 
-**Made with ❤️ and Lua**
+**Made with extra ❤️ and Lua**
 
 </div>
