@@ -9,6 +9,7 @@ vim.o.cursorcolumn = true
 vim.o.showmode = false
 vim.o.signcolumn = "yes"
 vim.o.clipboard = unnamedplus
+vim.opt.splitbelow = true
 
 vim.o.tabstop = 2
 vim.o.shiftwidth = 2
