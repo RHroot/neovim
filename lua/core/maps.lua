@@ -5,6 +5,14 @@ local map = vim.keymap.set
 local vim = vim
 local opts = { noremap = true, silent = false }
 
+-- better movement in wrapped text
+map("n", "j", function()
+	return vim.v.count == 0 and "gj" or "j"
+end, { expr = true, silent = true, desc = "Down (warp-aware)" })
+map("n", "k", function()
+	return vim.v.count == 0 and "gk" or "k"
+end, { expr = true, silent = true, desc = "Up (warp-aware)" })
+
 -- General
 map({ "n", "i", "v", "c", "t", "x", "s", "o" }, "<C-c>", "<Esc>", opts)
 map({ "n", "v", "x" }, ";", ":", opts)
@@ -34,6 +42,8 @@ map("n", "<C-S-j>", "<C-w>j", opts)
 map("n", "<C-S-k>", "<C-w>k", opts)
 map("n", "<C-S-l>", "<C-w>l", opts)
 map("n", "<C-S-h>", "<C-w>h", opts)
+map("n", "<leader>sv", ":vsplit<CR>", opts)
+map("n", "<leader>sh", ":split<CR>", opts)
 
 -- Prime's remaps
 map("v", "K", ":m '<-2<CR>gv=gv", opts)
