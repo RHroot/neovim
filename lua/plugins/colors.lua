@@ -29,7 +29,7 @@ return {
 		if colorscheme_exists("tokyonight") then
 			vim.cmd.colorscheme("tokyonight")
 		else
-			vim.cmd.colorscheme("retrobox")
+			vim.cmd.colorscheme("habamax")
 		end
 	end,
 }
