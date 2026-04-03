@@ -725,7 +725,8 @@ end
 --------------------------------------------------
 --- Git Signs
 --------------------------------------------------
-require("gitsigns").setup({
+local gitsigns = require("gitsigns")
+gitsigns.setup({
 	signs = {
 		add = { text = "+" },
 		change = { text = "~" },
@@ -749,6 +750,28 @@ require("gitsigns").setup({
 		follow_files = true,
 	},
 })
+
+map("n", "]h", function()
+	gitsigns.next_hunk()
+end, { desc = "Next git hunk" })
+map("n", "[h", function()
+	gitsigns.prev_hunk()
+end, { desc = "Previous git hunk" })
+map("n", "<leader>hs", function()
+	gitsigns.stage_hunk()
+end, { desc = "Stage git hunk" })
+map("n", "<leader>hr", function()
+	gitsigns.reset_hunk()
+end, { desc = "Reset git hunk" })
+map("n", "<leader>hp", function()
+	gitsigns.preview_hunk()
+end, { desc = "Preview git hunk" })
+map("n", "<leader>hb", function()
+	gitsigns.blame_line()
+end, { desc = "Blame current line" })
+map("n", "<leader>hd", function()
+	gitsigns.diffthis()
+end, { desc = "Diff current file" })
 
 --------------------------------------------------
 --- Cloak
