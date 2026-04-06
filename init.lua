@@ -1028,15 +1028,34 @@ hi("MiniStatuslineModeCommand", { fg = "#1e1e2e", bg = "#f9e2af", bold = true })
 --------------------------------------------------
 local hipatterns = require("mini.hipatterns")
 
---- Utils
-local function expand_hex(hex)
-	hex = hex:gsub("^#", "")
-	if #hex == 3 or #hex == 4 then
-		hex = hex:gsub(".", "%1%1")
+local function get_luminance(r, g, b)
+	local function calc(c)
+		return c <= 0.03928 and (c / 12.92) or math.pow((c + 0.055) / 1.055, 2.4)
 	end
-	return "#" .. hex
+	return 0.2126 * calc(r) + 0.7152 * calc(g) + 0.0722 * calc(b)
 end
 
+local cache = {}
+local function make_highlight(hex)
+	if cache[hex] then
+		return cache[hex]
+	end
+
+	local name = "MiniHipatterns_" .. hex:sub(2)
+	if vim.fn.hlexists(name) == 0 then
+		local r = tonumber(hex:sub(2, 3), 16) / 255
+		local g = tonumber(hex:sub(4, 5), 16) / 255
+		local b = tonumber(hex:sub(6, 7), 16) / 255
+
+		local fg = get_luminance(r, g, b) > 0.179 and "#000000" or "#ffffff"
+		vim.api.nvim_set_hl(0, name, { fg = fg, bg = hex })
+	end
+
+	cache[hex] = name
+	return name
+end
+
+--- Color Conversions
 local function to_hex(r, g, b)
 	return string.format(
 		"#%02x%02x%02x",
@@ -1076,36 +1095,23 @@ local function hsl_to_rgb(h, s, l)
 	return f(p, q, h + 1 / 3), f(p, q, h), f(p, q, h - 1 / 3)
 end
 
-local cache = {}
-local function make_highlight(hex)
-	hex = expand_hex(hex)
-	local base = (#hex == 9) and hex:sub(1, 7) or hex
-
-	if cache[base] then
-		return cache[base]
-	end
-
-	local name = "MiniHipatterns" .. base:sub(2)
-
-	if vim.fn.hlexists(name) == 0 then
-		local r = tonumber(base:sub(2, 3), 16) / 255
-		local g = tonumber(base:sub(4, 5), 16) / 255
-		local b = tonumber(base:sub(6, 7), 16) / 255
-		local fg = (0.299 * r + 0.587 * g + 0.114 * b) > 0.5 and "#000000" or "#ffffff"
-		vim.api.nvim_set_hl(0, name, { fg = fg, bg = base })
-	end
-
-	cache[base] = name
-	return name
+--- Highlight Group Generators
+local function hex_group(_, match)
+	return make_highlight(match)
 end
 
---- Pattern helpers
-local function hex_group(_, m)
-	return make_highlight(m)
+local function short_hex_group(_, match)
+	local hex = "#" .. match:sub(2):gsub(".", "%1%1")
+	return make_highlight(hex)
 end
 
-local function rgb_group(_, m)
-	local r, g, b = m:match("(%d+)%s*,%s*(%d+)%s*,%s*(%d+)")
+local function alpha_hex_group(_, match)
+	local hex = match:sub(1, 7) -- Strip alpha channel for the background color
+	return make_highlight(hex)
+end
+
+local function rgb_group(_, match)
+	local r, g, b = match:match("(%d+)%s*,%s*(%d+)%s*,%s*(%d+)")
 	r, g, b = tonumber(r), tonumber(g), tonumber(b)
 	if not r or r > 255 or g > 255 or b > 255 then
 		return
@@ -1113,8 +1119,8 @@ local function rgb_group(_, m)
 	return make_highlight(to_hex(r / 255, g / 255, b / 255))
 end
 
-local function hsl_group(_, m)
-	local h, s, l = m:match("(%d+%.?%d*)%s*,%s*(%d+%.?%d*)%%?%s*,%s*(%d+%.?%d*)%%?")
+local function hsl_group(_, match)
+	local h, s, l = match:match("(%d+%.?%d*)%s*,%s*(%d+%.?%d*)%%?%s*,%s*(%d+%.?%d*)%%?")
 	h, s, l = tonumber(h), tonumber(s), tonumber(l)
 	if not h or h > 360 or not s or s > 100 or not l or l > 100 then
 		return
@@ -1125,46 +1131,17 @@ end
 --- Setup
 hipatterns.setup({
 	highlighters = {
-		fixme = { pattern = "%f[%w]()FIXME()%f[%W]", group = "MiniHipatternsFixme" },
-		hack = { pattern = "%f[%w]()HACK()%f[%W]", group = "MiniHipatternsHack" },
-		todo = { pattern = "%f[%w]()TODO()%f[%W]", group = "MiniHipatternsTodo" },
-		note = { pattern = "%f[%w]()NOTE()%f[%W]", group = "MiniHipatternsNote" },
-
-		numbers = { pattern = "%d+", group = "Number" },
-		important = { pattern = "IMPORTANT", group = "WarningMsg" },
-
-		comment_todo = {
-			pattern = "%f[%w](TODO|FIXME|BUG):",
-			group = "Comment",
-			callback = function(text)
-				return text:match("^%s*[%#/%-%s]+") ~= nil
-			end,
-		},
-
-		--- Colors
-		hex_alpha = { pattern = "#%x%x%x%x%x%x%x%x%f[%W]", group = hex_group },
-		hex = { pattern = "#%x%x%x%x%x%x%f[%W]", group = hex_group },
-		hex_short = { pattern = "#%x%x%x%f[%W]", group = hex_group },
-
-		hex_no_hash = {
-			pattern = "%f[%w]%x%x%x%x%x%x%x%x%f[%W]",
-			group = function(_, m)
-				return m:match("^[%da-fA-F]+$") and make_highlight(m)
-			end,
-		},
-
-		rgba_hex = {
-			pattern = "rgba?%((%x+)%)",
-			group = function(_, m)
-				return (#m == 6 or #m == 8) and make_highlight(m)
-			end,
-		},
-
+		fixme = { pattern = "%f[%w_]()FIXME()%f[^%w_]", group = "MiniHipatternsFixme" },
+		hack = { pattern = "%f[%w_]()HACK()%f[^%w_]", group = "MiniHipatternsHack" },
+		todo = { pattern = "%f[%w_]()TODO()%f[^%w_]", group = "MiniHipatternsTodo" },
+		note = { pattern = "%f[%w_]()NOTE()%f[^%w_]", group = "MiniHipatternsNote" },
+		hex_alpha = { pattern = "#%x%x%x%x%x%x%x%x%f[%X]", group = alpha_hex_group },
+		hex = { pattern = "#%x%x%x%x%x%x%f[%X]", group = hex_group },
+		hex_short = { pattern = "#%x%x%x%f[%X]", group = short_hex_group },
 		rgb = {
 			pattern = "rgba?%(%s*%d+%s*,%s*%d+%s*,%s*%d+[^%)]*%)",
 			group = rgb_group,
 		},
-
 		hsl = {
 			pattern = "hsla?%(%s*%d+%.?%d*%s*,%s*%d+%.?%d*%%?%s*,%s*%d+%.?%d*%%?[^%)]*%)",
 			group = hsl_group,
