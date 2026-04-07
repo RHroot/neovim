@@ -167,6 +167,7 @@ vim.opt.signcolumn = "yes:1"
 vim.opt.winborder = "rounded"
 vim.opt.scrolloff = 8
 vim.opt.virtualedit = "all"
+vim.opt.cmdheight = 1
 vim.g.have_nerd_font = true
 
 --- Tabs & Indentation
