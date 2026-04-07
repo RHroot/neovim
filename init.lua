@@ -237,7 +237,6 @@ map("n", "<leader>rt", ":restart<CR>", { noremap = true, silent = false })
 map("n", "<leader>rr", ":ex<CR>", { noremap = true, silent = false })
 map("n", "<leader>ww", ":w<CR>", { noremap = true, silent = false })
 map("n", "<leader>qq", ":q<CR>", { noremap = true, silent = false })
-map("n", "<leader>ex", ":q!<CR>", { noremap = true, silent = false })
 map("n", "<leader>qn", ":bn<CR>", { noremap = true, silent = true })
 map("n", "<leader>qp", ":bp<CR>", { noremap = true, silent = true })
 map("n", "<leader>qd", ":bd<CR>", { noremap = true, silent = true })
@@ -366,8 +365,9 @@ require("mason-tool-installer").setup({
 		"stylua",
 		"sqruff",
 		"alejandra",
-		"google-java-format",
 		"prettierd",
+		"clang-format",
+		"google-java-format",
 	},
 })
 
@@ -406,103 +406,81 @@ vim.lsp.enable(servers)
 --------------------------------------------------
 --- Completion
 --------------------------------------------------
-vim.api.nvim_create_autocmd("InsertEnter", {
-	once = true,
-	callback = function()
-		local ok, b = pcall(require, "blink.cmp")
-		if not ok then
-			return
-		end
-		b.setup({
-			snippets = { preset = "default" },
+if has_blink then
+	blink.setup({
+		snippets = { preset = "default" },
 
-			sources = {
-				default = { "lsp", "path", "snippets", "buffer", "cmdline" },
+		sources = {
+			default = { "lsp", "path", "snippets", "buffer", "cmdline" },
+		},
+
+		fuzzy = { implementation = "lua" },
+
+		keymap = {
+			preset = "none",
+			["<CR>"] = { "accept", "fallback" },
+			["<C-Space>"] = { "show", "hide_documentation" },
+			["<Esc>"] = { "hide", "fallback" },
+			["<C-e>"] = { "show_documentation", "hide_documentation" },
+			["<C-u>"] = { "scroll_documentation_up", "fallback" },
+			["<C-d>"] = { "scroll_documentation_down", "fallback" },
+			["<C-n>"] = {
+				function(cmp)
+					if vim.snippet.active({ direction = 1 }) then
+						vim.snippet.jump(1)
+					else
+						cmp.select_next()
+					end
+				end,
 			},
-
-			fuzzy = { implementation = "lua" },
-
-			keymap = {
-				preset = "none",
-				["<CR>"] = { "accept", "fallback" },
-				["<C-Space>"] = { "show", "hide_documentation" },
-				["<Esc>"] = { "hide", "fallback" },
-				["<C-e>"] = { "show_documentation", "hide_documentation" },
-				["<C-u>"] = { "scroll_documentation_up", "fallback" },
-				["<C-d>"] = { "scroll_documentation_down", "fallback" },
-				["<Tab>"] = {
-					function(cmp)
-						if vim.snippet.active({ direction = 1 }) then
-							vim.snippet.jump(1)
-						else
-							cmp.select_next()
-						end
-					end,
-				},
-				["<S-tab>"] = {
-					function(cmp)
-						if vim.snippet.active({ direction = -1 }) then
-							vim.snippet.jump(-1)
-						else
-							cmp.select_prev()
-						end
-					end,
-				},
-				["<C-n>"] = {
-					function(cmp)
-						if vim.snippet.active({ direction = 1 }) then
-							vim.snippet.jump(1)
-						else
-							cmp.select_next()
-						end
-					end,
-				},
-				["<C-p>"] = {
-					function(cmp)
-						if vim.snippet.active({ direction = -1 }) then
-							vim.snippet.jump(-1)
-						else
-							cmp.select_prev()
-						end
-					end,
-				},
+			["<C-p>"] = {
+				function(cmp)
+					if vim.snippet.active({ direction = -1 }) then
+						vim.snippet.jump(-1)
+					else
+						cmp.select_prev()
+					end
+				end,
 			},
+		},
 
-			signature = {
-				enabled = true,
-				window = {
-					max_height = 8,
-					max_width = 60,
-					border = "rounded",
+		signature = {
+			enabled = true,
+			window = {
+				max_height = 8,
+				max_width = 60,
+				border = "rounded",
+			},
+		},
+
+		appearance = {
+			use_nvim_cmp_as_default = true,
+			nerd_font_variant = "mono",
+		},
+
+		completion = {
+			trigger = {
+				show_on_keyword = true,
+				show_on_trigger_character = true,
+			},
+			menu = {
+				auto_show = true,
+			},
+			list = {
+				selection = {
+					preselect = true,
+					auto_insert = false,
 				},
 			},
-
-			appearance = { nerd_font_variant = "mono" },
-
-			completion = {
-				trigger = {
-					show_on_keyword = true,
-					show_on_trigger_character = true,
-				},
-				menu = {
-					auto_show = true,
-				},
-				list = {
-					selection = {
-						preselect = true,
-						auto_insert = false,
-					},
-				},
-				documentation = {
-					auto_show = true,
-					auto_show_delay_ms = 200,
-				},
-				keyword = { range = "prefix" },
-				ghost_text = { enabled = true },
+			documentation = {
+				auto_show = true,
+				auto_show_delay_ms = 200,
 			},
-		})
-	end,
-})
+			keyword = { range = "prefix" },
+			ghost_text = { enabled = true },
+		},
+	})
+end
 
 --------------------------------------------------
 --- Formatter
@@ -911,8 +889,8 @@ pick.setup({
 	mappings = {
 		toggle_preview = "<M-L>",
 		toggle_info = "<M-H>",
-		move_down = "<Tab>",
-		move_up = "<S-Tab>",
+		move_down = "<C-n>",
+		move_up = "<C-p>",
 	},
 	options = {
 		use_cache = true,
