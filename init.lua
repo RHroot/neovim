@@ -293,7 +293,6 @@ vim.pack.add({
 	{ src = "https://github.com/folke/tokyonight.nvim" },
 
 	--- Plugins for LSP
-	{ src = "https://github.com/neovim/nvim-lspconfig" },
 	{ src = "https://github.com/mason-org/mason.nvim" },
 	{ src = "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim" },
 
@@ -373,35 +372,88 @@ require("mason-tool-installer").setup({
 
 --- Setup base capabilities
 local capabilities = vim.lsp.protocol.make_client_capabilities()
---- Defensive Blink wrap
 local has_blink, blink = pcall(require, "blink.cmp")
 if has_blink then
 	capabilities = blink.get_lsp_capabilities(capabilities)
 end
 
+--- Define all server configurations manually
 local servers = {
-	"zls",
-	"html",
-	"cssls",
-	"ts_ls",
-	"pylsp",
-	"gopls",
-	"jdtls",
-	"vtsls",
-	"lua_ls",
-	"clangd",
-	"tailwindcss",
-	"postgres_lsp",
-	"rust_analyzer",
+	zls = {
+		cmd = { "zls" },
+		filetypes = { "zig", "zir" },
+		root_markers = { "zls.json", "build.zig", ".git" },
+	},
+	html = {
+		cmd = { "vscode-html-language-server", "--stdio" },
+		filetypes = { "html", "templ" },
+		root_markers = { "package.json", ".git" },
+	},
+	cssls = {
+		cmd = { "vscode-css-language-server", "--stdio" },
+		filetypes = { "css", "scss", "less" },
+		root_markers = { "package.json", ".git" },
+	},
+	ts_ls = {
+		cmd = { "typescript-language-server", "--stdio" },
+		filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+		root_markers = { "tsconfig.json", "package.json", "jsconfig.json", ".git" },
+	},
+	vtsls = {
+		cmd = { "vtsls", "--stdio" },
+		filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+		root_markers = { "tsconfig.json", "package.json", "jsconfig.json", ".git" },
+	},
+	pylsp = {
+		cmd = { "pylsp" },
+		filetypes = { "python" },
+		root_markers = { "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
+	},
+	gopls = {
+		cmd = { "gopls" },
+		filetypes = { "go", "gomod", "gowork", "gotmpl" },
+		root_markers = { "go.work", "go.mod", ".git" },
+	},
+	jdtls = {
+		cmd = { "jdtls" },
+		filetypes = { "java" },
+		root_markers = { "build.gradle", "pom.xml", ".git" },
+	},
+	lua_ls = {
+		cmd = { "lua-language-server" },
+		filetypes = { "lua" },
+		root_markers = { ".luarc.json", ".git" },
+	},
+	clangd = {
+		cmd = { "clangd" },
+		filetypes = { "c", "cpp", "objc", "objcpp", "cuda", "proto" },
+		root_markers = { ".clangd", ".clang-tidy", ".clang-format", "compile_commands.json", ".git" },
+	},
+	tailwindcss = {
+		cmd = { "tailwindcss-language-server", "--stdio" },
+		filetypes = { "html", "css", "javascriptreact", "typescriptreact", "svelte", "vue" },
+		root_markers = { "tailwind.config.js", "tailwind.config.ts", "postcss.config.js", ".git" },
+	},
+	postgres_lsp = {
+		cmd = { "postgres_lsp" },
+		filetypes = { "sql" },
+		root_markers = { ".git" },
+	},
+	rust_analyzer = {
+		cmd = { "rust-analyzer" },
+		filetypes = { "rust" },
+		root_markers = { "Cargo.toml", "rust-project.json", ".git" },
+	},
 }
 
-for _, server in ipairs(servers) do
-	vim.lsp.config(server, {
-		capabilities = capabilities,
-	})
+--- Apply configurations
+for server_name, config in pairs(servers) do
+	config.capabilities = capabilities
+	vim.lsp.config(server_name, config)
 end
 
-vim.lsp.enable(servers)
+--- Enable all servers
+vim.lsp.enable(vim.tbl_keys(servers))
 
 --------------------------------------------------
 --- Completion
