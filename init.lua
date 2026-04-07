@@ -166,6 +166,7 @@ vim.opt.showmode = false
 vim.opt.signcolumn = "yes:1"
 vim.opt.winborder = "rounded"
 vim.opt.scrolloff = 8
+vim.opt.virtualedit = "all"
 vim.g.have_nerd_font = true
 
 --- Tabs & Indentation
@@ -685,7 +686,7 @@ ts.install({
 require("mini.ai").setup()
 require("mini.icons").setup()
 require("mini.extra").setup()
-require("mini.animate").setup()
+-- require("mini.animate").setup()
 require("mini.tabline").setup()
 require("mini.surround").setup()
 require("mini.operators").setup()
