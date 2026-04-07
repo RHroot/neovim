@@ -1212,7 +1212,6 @@ local runners = {
 }
 
 vim.keymap.set("n", "<leader>rn", function()
-	vim.cmd("w")
 	local cmd = runners[vim.bo.filetype]
 
 	if not cmd then
