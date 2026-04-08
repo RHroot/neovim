@@ -113,11 +113,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
 --- Diagnostics config
 vim.diagnostic.config({
-	virtual_text = false,
-	virtual_lines = {
-		only_current_line = false,
-		severity = { min = vim.diagnostic.severity.WARN },
-	},
+	virtual_text = true,
+	-- virtual_lines = {
+	-- 	only_current_line = false,
+	-- 	severity = { min = vim.diagnostic.severity.WARN },
+	-- },
 	underline = true,
 	severity_sort = true,
 	update_in_insert = false,
@@ -290,7 +290,6 @@ map("x", "<leader>p", [["_dP]], { noremap = true, silent = true })
 --- Plugins Will Added Here
 ----------------------------------------------------------
 vim.pack.add({
-
 	--- Plugins for Colorscheme
 	{ src = "https://github.com/folke/tokyonight.nvim" },
 
@@ -334,6 +333,7 @@ if has_tokyonight then
 			floats = "transparent",
 		},
 	})
+
 	vim.cmd.colorscheme("tokyonight")
 else
 	pcall(vim.cmd.colorscheme, "unokai")
