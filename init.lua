@@ -438,7 +438,12 @@ local servers = {
 		},
 	},
 	clangd = {
-		cmd = { "clangd" },
+		cmd = {
+			"clangd",
+			"--clang-tidy",
+			"--background-index",
+			"--header-insertion=never",
+		},
 		filetypes = { "c", "cpp", "objc", "objcpp", "cuda", "proto" },
 		root_markers = { ".clangd", ".clang-tidy", ".clang-format", "compile_commands.json", ".git" },
 	},
