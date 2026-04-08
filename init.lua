@@ -114,8 +114,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
 --- Diagnostics config
 vim.diagnostic.config({
 	virtual_text = false,
-	virtual_line = {
-		only_current_line = true,
+	virtual_lines = {
+		only_current_line = false,
 		severity = { min = vim.diagnostic.severity.WARN },
 	},
 	underline = true,
@@ -130,10 +130,10 @@ vim.diagnostic.config({
 
 	signs = {
 		text = {
-			[vim.diagnostic.severity.ERROR] = "󰅚",
-			[vim.diagnostic.severity.WARN] = "󰀪",
-			[vim.diagnostic.severity.INFO] = "󰋽",
-			[vim.diagnostic.severity.HINT] = "󰌶",
+			[vim.diagnostic.severity.ERROR] = "E", -- "󰅚"
+			[vim.diagnostic.severity.WARN] = "W", -- "󰀪"
+			[vim.diagnostic.severity.INFO] = "I", -- "󰋽"
+			[vim.diagnostic.severity.HINT] = "H", -- "󰌶"
 		},
 	},
 })
