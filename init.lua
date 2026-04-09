@@ -203,7 +203,7 @@ end
 vim.opt.undodir = undodir
 
 --- System & Performance
-vim.opt.clipboard = "unnamedplus"
+vim.opt.clipboard = ""
 vim.opt.splitbelow = true
 vim.opt.timeout = true
 vim.opt.timeoutlen = 500
