@@ -258,7 +258,7 @@ map("n", "<Esc>", "<cmd>nohlsearch<CR>", { noremap = true, silent = true })
 map("n", "<C-c>", "<cmd>nohlsearch<CR>", { noremap = true, silent = true })
 map("n", "<leader>so", ":update<CR> :source<CR>", { noremap = true, silent = false })
 map("n", "<leader>si", "<cmd>source ~/.config/nvim/init.lua<CR>", { noremap = true, silent = false })
-map({ "v", "x" }, "<C-_>", "gc", { remap = true, desc = "Toggle comment" })
+map({ "v", "x" }, "<C-_>", "gc", { noremap = true, desc = "Toggle comment" })
 map("n", "<C-_>", "gcc", { noremap = true, silent = true, desc = "Toggle comment" })
 map({ "n", "v", "x" }, "<leader>url", function()
 	vim.ui.open(vim.fn.expand("<cfile>"))
@@ -892,7 +892,7 @@ map("n", "[H", function()
 	require("mini.diff").goto_hunk("first")
 end, { desc = "First Git Hunk" })
 map("n", "<leader>go", function()
-	require("mini.diff").toggle_overlay()
+	require("mini.diff").toggle_overlay(0)
 end, { desc = "Toggle Diff Overlay" })
 
 --------------------------------------------------
@@ -1085,7 +1085,7 @@ local hipatterns = require("mini.hipatterns")
 
 local function get_luminance(r, g, b)
 	local function calc(c)
-		return c <= 0.03928 and (c / 12.92) or math.pow((c + 0.055) / 1.055, 2.4)
+		return c <= 0.03928 and (c / 12.92) or ((c + 0.055) / 1.055) ^ 2.4
 	end
 	return 0.2126 * calc(r) + 0.7152 * calc(g) + 0.0722 * calc(b)
 end
