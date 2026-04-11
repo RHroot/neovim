@@ -137,14 +137,25 @@ vim.diagnostic.config({
 		},
 	},
 })
+-- Jump to next diagnostic
+vim.keymap.set("n", "]d", function()
+	vim.diagnostic.jump({ count = 1, float = true })
+end, { desc = "Next Diagnostic" })
+-- Jump to previous diagnostic
+vim.keymap.set("n", "[d", function()
+	vim.diagnostic.jump({ count = -1, float = true })
+end, { desc = "Previous Diagnostic" })
 
 --- CursorHold diagnostics (non-spammy)
 vim.api.nvim_create_autocmd("CursorHold", {
+	desc = "Auto-show diagnostics in float",
 	callback = function()
-		if vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })[1] then
-			vim.diagnostic.open_float(nil, {
+		local diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })
+		if #diagnostics > 0 then
+			vim.diagnostic.open_float({
+				scope = "line",
 				focusable = false,
-				close_events = { "BufLeave", "CursorMoved", "InsertEnter" },
+				close_events = { "BufLeave", "CursorMoved", "InsertEnter", "FocusLost" },
 				border = "rounded",
 				source = "if_many",
 			})
@@ -165,7 +176,7 @@ vim.opt.cursorcolumn = true
 vim.opt.showmode = false
 vim.opt.signcolumn = "yes:1"
 vim.opt.winborder = "rounded"
-vim.opt.scrolloff = 8
+vim.opt.scrolloff = 9
 vim.opt.virtualedit = "all"
 vim.opt.cmdheight = 1
 vim.g.have_nerd_font = true
