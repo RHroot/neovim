@@ -82,17 +82,27 @@ vim.api.nvim_create_autocmd("LspAttach", {
 	group = lsp_group,
 	callback = function(ev)
 		local buf = ev.buf
+		local client = vim.lsp.get_client_by_id(ev.data.client_id)
 
 		local function map(mode, lhs, rhs, desc)
-			vim.keymap.set(mode, lhs, rhs, { buffer = buf, desc = desc })
+			vim.keymap.set(mode, lhs, rhs, { buffer = buf, desc = desc, noremap = true })
 		end
 
 		--- Navigation
 		map("n", "<leader>gd", vim.lsp.buf.definition, "Go to definition")
 		map("n", "<leader>gr", vim.lsp.buf.references, "Find references")
 		map("n", "<leader>gi", vim.lsp.buf.implementation, "Go to implementation")
+		map("n", "<leader>gD", vim.lsp.buf.declaration, "Go to declaration")
 		map("n", "K", vim.lsp.buf.hover, "Hover documentation")
 		map("n", "<C-s>", vim.lsp.buf.signature_help, "Signature help")
+
+		--- Diagnostics
+		map("n", "<leader>]d", function()
+			vim.diagnostic.jump({ count = 1 })
+		end, "Next diagnostic")
+		map("n", "<leader>[d", function()
+			vim.diagnostic.jump({ count = -1 })
+		end, "Previous diagnostic")
 
 		--- Workspace
 		map("n", "<leader>aw", vim.lsp.buf.add_workspace_folder, "Add workspace folder")
@@ -104,20 +114,27 @@ vim.api.nvim_create_autocmd("LspAttach", {
 
 		--- Actions
 		map("n", "<leader>ca", vim.lsp.buf.code_action, "Code action")
-		map("n", "<leader>sn", vim.lsp.buf.rename, "Rename symbol")
+		map("n", "<leader>cr", vim.lsp.buf.rename, "Rename symbol")
 		map("n", "<leader>for", function()
 			vim.lsp.buf.format({ async = true })
 		end, "Format buffer")
+
+		--- Inlay Hints (0.10+)
+		if client and client:supports_method("textDocument/inlayHint", buf) then
+			map("n", "<leader>ci", function()
+				vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = buf }), { bufnr = buf })
+			end, "Toggle inlay hints")
+		end
+
+		if client and client:supports_method("textDocument/completion", buf) then
+			vim.lsp.completion.enable(true, client.id, buf, { autotrigger = true })
+		end
 	end,
 })
 
 --- Diagnostics config
 vim.diagnostic.config({
 	virtual_text = true,
-	-- virtual_lines = {
-	-- 	only_current_line = false,
-	-- 	severity = { min = vim.diagnostic.severity.WARN },
-	-- },
 	underline = true,
 	severity_sort = true,
 	update_in_insert = false,
@@ -130,21 +147,13 @@ vim.diagnostic.config({
 
 	signs = {
 		text = {
-			[vim.diagnostic.severity.ERROR] = "E", -- "󰅚"
-			[vim.diagnostic.severity.WARN] = "W", -- "󰀪"
-			[vim.diagnostic.severity.INFO] = "I", -- "󰋽"
-			[vim.diagnostic.severity.HINT] = "H", -- "󰌶"
+			[vim.diagnostic.severity.ERROR] = "E",
+			[vim.diagnostic.severity.WARN] = "W",
+			[vim.diagnostic.severity.INFO] = "I",
+			[vim.diagnostic.severity.HINT] = "H",
 		},
 	},
 })
--- Jump to next diagnostic
-vim.keymap.set("n", "]d", function()
-	vim.diagnostic.jump({ count = 1, float = true })
-end, { desc = "Next Diagnostic" })
--- Jump to previous diagnostic
-vim.keymap.set("n", "[d", function()
-	vim.diagnostic.jump({ count = -1, float = true })
-end, { desc = "Previous Diagnostic" })
 
 --- CursorHold diagnostics (non-spammy)
 vim.api.nvim_create_autocmd("CursorHold", {
