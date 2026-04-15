@@ -110,7 +110,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		map("n", "<leader>lw", function()
 			print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
 		end, "List workspace folders")
-		map("n", "<leader>sw", vim.lsp.buf.workspace_symbol, "Search workspace symbols")
+		map("n", "<leader>ws", vim.lsp.buf.workspace_symbol, "Search workspace symbols")
 
 		--- Actions
 		map("n", "<leader>ca", vim.lsp.buf.code_action, "Code action")
@@ -126,9 +126,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
 			end, "Toggle inlay hints")
 		end
 
-		if client and client:supports_method("textDocument/completion", buf) then
-			vim.lsp.completion.enable(true, client.id, buf, { autotrigger = true })
-		end
+		-- if client and client:supports_method("textDocument/completion", buf) then
+		-- 	vim.lsp.completion.enable(true, client.id, buf, { autotrigger = true })
+		-- end
 	end,
 })
 
@@ -802,12 +802,19 @@ vim.keymap.set("n", "<leader>ss", function()
 end, { desc = "Select Session" })
 
 -- Keybind to save the current state as a new session
-vim.keymap.set("n", "<leader>ws", function()
+vim.keymap.set("n", "<leader>sw", function()
 	local name = vim.fn.input("Session name: ")
 	if name ~= "" then
 		MiniSessions.write(name)
 	end
 end, { desc = "Write Session" })
+
+vim.keymap.set("n", "<leader>sd", function()
+	local name = vim.fn.input("Session name to delete: ")
+	if name ~= "" then
+		MiniSessions.delete(name)
+	end
+end, { desc = "Delete Session" })
 
 --------------------------------------------------
 --- AutoPairs
