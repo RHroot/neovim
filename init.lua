@@ -82,8 +82,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 	group = lsp_group,
 	callback = function(ev)
 		local buf = ev.buf
-		local client = vim.lsp.get_client_by_id(ev.data.client_id)
-
 		local function map(mode, lhs, rhs, desc)
 			vim.keymap.set(mode, lhs, rhs, { buffer = buf, desc = desc, noremap = true })
 		end
@@ -118,17 +116,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		map("n", "<leader>for", function()
 			vim.lsp.buf.format({ async = true })
 		end, "Format buffer")
-
-		--- Inlay Hints (0.10+)
-		if client and client:supports_method("textDocument/inlayHint", buf) then
-			map("n", "<leader>ci", function()
-				vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = buf }), { bufnr = buf })
-			end, "Toggle inlay hints")
-		end
-
-		-- if client and client:supports_method("textDocument/completion", buf) then
-		-- 	vim.lsp.completion.enable(true, client.id, buf, { autotrigger = true })
-		-- end
 	end,
 })
 
@@ -282,10 +269,6 @@ map("n", "k", function()
 end, { expr = true, silent = true, desc = "Up (warp-aware)" })
 
 --- To Travel between splits or panes you may call it
-map("n", "<C-j>", "<C-w>j", { noremap = true, silent = true })
-map("n", "<C-k>", "<C-w>k", { noremap = true, silent = true })
-map("n", "<C-l>", "<C-w>l", { noremap = true, silent = true })
-map("n", "<C-h>", "<C-w>h", { noremap = true, silent = true })
 map("n", "<C-S-j>", "<C-w>j", { noremap = true, silent = true })
 map("n", "<C-S-k>", "<C-w>k", { noremap = true, silent = true })
 map("n", "<C-S-l>", "<C-w>l", { noremap = true, silent = true })
@@ -494,44 +477,66 @@ end
 vim.lsp.enable(vim.tbl_keys(servers))
 
 --------------------------------------------------
+--- Snippets
+--------------------------------------------------
+require("mini.snippets").setup({
+	snippets = {
+		function()
+			return {
+				{
+					prefix = "req",
+					body = "local ${1:mod} = require('${1:mod}')",
+					desc = "Require module",
+					filetype = "lua",
+				},
+				{
+					prefix = "pp",
+					body = "print(${1})",
+					filetype = "python",
+				},
+				{
+					prefix = "main",
+					body = {
+						"if __name__ == '__main__':",
+						"    ${1:main()}",
+					},
+					filetype = "python",
+				},
+				{
+					prefix = "cl",
+					body = "console.log(${1})",
+					filetype = { "javascript", "typescript" },
+				},
+			}
+		end,
+	},
+})
+
+--------------------------------------------------
 --- Completion
 --------------------------------------------------
 if has_blink then
 	blink.setup({
-		snippets = { preset = "default" },
 
 		sources = {
-			default = { "lsp", "path", "snippets", "buffer", "cmdline" },
+			default = { "snippets", "lsp", "path", "buffer", "cmdline" },
 		},
+
+		snippets = { preset = "mini_snippets" },
 
 		fuzzy = { implementation = "lua" },
 
 		keymap = {
 			preset = "none",
 			["<CR>"] = { "accept", "fallback" },
-			["<C-Space>"] = { "show", "hide_documentation" },
 			["<Esc>"] = { "hide", "fallback" },
 			["<C-e>"] = { "show_documentation", "hide_documentation" },
 			["<C-u>"] = { "scroll_documentation_up", "fallback" },
 			["<C-d>"] = { "scroll_documentation_down", "fallback" },
-			["<C-n>"] = {
-				function(cmp)
-					if vim.snippet.active({ direction = 1 }) then
-						vim.snippet.jump(1)
-					else
-						cmp.select_next()
-					end
-				end,
-			},
-			["<C-p>"] = {
-				function(cmp)
-					if vim.snippet.active({ direction = -1 }) then
-						vim.snippet.jump(-1)
-					else
-						cmp.select_prev()
-					end
-				end,
-			},
+			["<C-n>"] = { "select_next", "fallback" },
+			["<C-p>"] = { "select_prev", "fallback" },
+			["<Tab>"] = { "select_next", "fallback" },
+			["<S-Tab>"] = { "select_prev", "fallback" },
 		},
 
 		signature = {
@@ -555,6 +560,7 @@ if has_blink then
 			},
 			menu = {
 				auto_show = true,
+				auto_show_delay_ms = 100,
 			},
 			list = {
 				selection = {
@@ -564,9 +570,9 @@ if has_blink then
 			},
 			documentation = {
 				auto_show = true,
-				auto_show_delay_ms = 200,
+				auto_show_delay_ms = 100,
 			},
-			keyword = { range = "prefix" },
+			keyword = { range = "full" },
 			ghost_text = { enabled = true },
 		},
 	})
@@ -982,8 +988,8 @@ pick.setup({
 	mappings = {
 		toggle_preview = "<M-L>",
 		toggle_info = "<M-H>",
-		move_down = "<C-n>",
-		move_up = "<C-p>",
+		move_down = "<C-j>",
+		move_up = "<C-k>",
 	},
 	options = {
 		use_cache = true,
