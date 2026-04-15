@@ -312,8 +312,10 @@ vim.pack.add({
 	--- Plugins that can be quite useful if you know how to use them from Mini.nvim
 	{ src = "https://github.com/nvim-mini/mini.nvim" },
 
+	--- Plugins for AI Completion
+	{ src = "https://github.com/supermaven-inc/supermaven-nvim" },
+
 	--- Plugins to get Copilot
-	{ src = "https://github.com/github/copilot.vim" },
 	{ src = "https://github.com/CopilotC-Nvim/CopilotChat.nvim" },
 	{ src = "https://github.com/nvim-lua/plenary.nvim" },
 })
@@ -674,7 +676,7 @@ end, { desc = "[F]ormat selection" })
 local ts = require("nvim-treesitter")
 ts.setup({
 	sync_install = true,
-	auto_install = false,
+	auto_install = true,
 	highlight = { enable = true },
 	indent = { enable = true },
 })
@@ -1233,6 +1235,24 @@ hipatterns.setup({
 })
 
 --------------------------------------------------
+--- AI Completion
+--------------------------------------------------
+require("supermaven-nvim").setup({
+	keymaps = {
+		accept_suggestion = "<M-p>",
+		clear_suggestion = "<M-[>",
+		accept_word = "<M-w>",
+	},
+	ignore_filetypes = { "bigfile", "log" },
+	log_level = "info",
+	disable_inline_completion = false,
+	disable_keymaps = false,
+	condition = function()
+		return false
+	end,
+})
+
+--------------------------------------------------
 --- Copilot
 --------------------------------------------------
 local has_chat, chat = pcall(require, "CopilotChat")
@@ -1276,25 +1296,6 @@ if has_chat then
 		end,
 	})
 end
-
-vim.g.copilot_no_tab_map = true
-
-vim.g.copilot_settings = {
-	selectedCompletionModel = "copilot-codex",
-	debounce_ms = 20,
-}
-
---- Accept suggestion
-vim.keymap.set("i", "<A-p>", 'copilot#Accept("\\<CR>")', {
-	expr = true,
-	replace_keycodes = false,
-	silent = true,
-})
-
---- Navigation
-vim.keymap.set("i", "<A-]>", "<Plug>(copilot-next)")
-vim.keymap.set("i", "<A-[>", "<Plug>(copilot-previous)")
-vim.keymap.set("i", "<A-x>", "<Plug>(copilot-dismiss)")
 
 --------------------------------------------------
 --- For running files inside neovim
