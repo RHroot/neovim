@@ -224,13 +224,13 @@ vim.opt.foldenable = false
 vim.opt.foldlevel = 0
 
 --- Neovide Specifics
-vim.opt.guifont = "FiraCode Nerd Font Mono:h22"
+vim.opt.guifont = "JetBrainsMono Nerd Font:h18"
 vim.opt.background = "dark"
 vim.g.neovide_padding_top = 0
 vim.g.neovide_padding_bottom = 0
 vim.g.neovide_padding_right = 0
 vim.g.neovide_padding_left = 0
-vim.g.neovide_opacity = 0.5
+vim.g.neovide_opacity = 0.8
 vim.g.transparency = 0.8
 
 ----------------------------------------------------------
