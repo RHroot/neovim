@@ -302,6 +302,7 @@ vim.pack.add({
 
 	--- Plugins for Completion
 	{ src = "https://github.com/saghen/blink.cmp" },
+	{ src = "https://github.com/saghen/blink.lib" },
 
 	--- Plugins for Formatting
 	{ src = "https://github.com/stevearc/conform.nvim" },
@@ -352,12 +353,13 @@ require("mason-tool-installer").setup({
 	ensure_installed = {
 		--- LSP's installed through mason
 		"zls",
-		"gopls",
+		"nil",
 		"jdtls",
 		"clangd",
 		"rust-analyzer",
 		"python-lsp-server",
 		"lua-language-server",
+		"bash-language-server",
 		"postgres-language-server",
 		"vtsls",
 		"css-lsp",
@@ -376,13 +378,6 @@ require("mason-tool-installer").setup({
 		"google-java-format",
 	},
 })
-
---- Setup base capabilities
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-local has_blink, blink = pcall(require, "blink.cmp")
-if has_blink then
-	capabilities = blink.get_lsp_capabilities(capabilities)
-end
 
 --- Define all server configurations manually
 local servers = {
@@ -416,11 +411,6 @@ local servers = {
 		filetypes = { "python" },
 		root_markers = { "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
 	},
-	gopls = {
-		cmd = { "gopls" },
-		filetypes = { "go", "gomod", "gowork", "gotmpl" },
-		root_markers = { "go.work", "go.mod", ".git" },
-	},
 	jdtls = {
 		cmd = { "jdtls" },
 		filetypes = { "java" },
@@ -438,6 +428,26 @@ local servers = {
 				workspace = {
 					library = vim.api.nvim_get_runtime_file("", true),
 					checkThirdParty = false,
+				},
+			},
+		},
+	},
+	bashls = {
+		cmd = { "bash-language-server", "start" },
+		filetypes = { "sh", "bash" },
+		root_markers = { ".git", ".shellcheckrc" },
+	},
+	nil_ls = {
+		cmd = { "nil" },
+		filetypes = { "nix" },
+		root_markers = { "flake.nix", ".git" },
+		settings = {
+			["nil"] = {
+				formatting = {
+					command = { "alejandra" },
+				},
+				diagnostics = {
+					ignored = { "unused_binding" },
 				},
 			},
 		},
@@ -469,9 +479,13 @@ local servers = {
 	},
 }
 
+--- Setup base blink
+local has_blink, blink = pcall(require, "blink.cmp")
+
 --- Apply configurations
 for server_name, config in pairs(servers) do
-	config.capabilities = capabilities
+	local capabilities = vim.lsp.protocol.make_client_capabilities()
+	config.capabilities = blink.get_lsp_capabilities(capabilities)
 	vim.lsp.config(server_name, config)
 end
 
@@ -518,6 +532,7 @@ require("mini.snippets").setup({
 --- Completion
 --------------------------------------------------
 if has_blink then
+	blink.build():wait(60000)
 	blink.setup({
 
 		sources = {
@@ -526,7 +541,7 @@ if has_blink then
 
 		snippets = { preset = "mini_snippets" },
 
-		fuzzy = { implementation = "lua" },
+		fuzzy = { implementation = "prefer_rust_with_warning" },
 
 		keymap = {
 			preset = "none",
