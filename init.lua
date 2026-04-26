@@ -108,7 +108,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		map("n", "<leader>lw", function()
 			print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
 		end, "List workspace folders")
-		map("n", "<leader>ws", vim.lsp.buf.workspace_symbol, "Search workspace symbols")
+		map("n", "<leader>sw", vim.lsp.buf.workspace_symbol, "Search workspace symbols")
 
 		--- Actions
 		map("n", "<leader>ca", vim.lsp.buf.code_action, "Code action")
@@ -244,14 +244,14 @@ local map = vim.keymap.set
 --- General
 map({ "n", "v", "x" }, ";", ":", { noremap = true, silent = false })
 map({ "n", "i", "v", "c", "t", "x", "s", "o" }, "<C-c>", "<Esc>", { noremap = true, silent = false })
+map("n", "<leader>w", ":w<CR>", { noremap = true, silent = false })
+map("n", "<leader>q", ":q<CR>", { noremap = true, silent = false })
+map("n", "<leader>bn", ":bn<CR>", { noremap = true, silent = true })
+map("n", "<leader>bp", ":bp<CR>", { noremap = true, silent = true })
+map("n", "<leader>bd", ":bd<CR>", { noremap = true, silent = true })
+map("n", "<leader>bc", ":enew<CR>", { noremap = true, silent = true })
+map("n", "<F5>", ":edit<CR>", { noremap = true, silent = false })
 map("n", "<leader>rt", ":restart<CR>", { noremap = true, silent = false })
-map("n", "<leader>rr", ":ex<CR>", { noremap = true, silent = false })
-map("n", "<leader>ww", ":w<CR>", { noremap = true, silent = false })
-map("n", "<leader>qq", ":q<CR>", { noremap = true, silent = false })
-map("n", "<leader>qn", ":bn<CR>", { noremap = true, silent = true })
-map("n", "<leader>qp", ":bp<CR>", { noremap = true, silent = true })
-map("n", "<leader>qd", ":bd<CR>", { noremap = true, silent = true })
-map("n", "<leader>qc", ":enew<CR>", { noremap = true, silent = true })
 map("n", "<Esc>", "<cmd>nohlsearch<CR>", { noremap = true, silent = true })
 map("n", "<C-c>", "<cmd>nohlsearch<CR>", { noremap = true, silent = true })
 map("n", "<leader>so", ":update<CR> :source<CR>", { noremap = true, silent = false })
@@ -317,6 +317,9 @@ vim.pack.add({
 
 	--- Plugins for AI Completion
 	{ src = "https://github.com/supermaven-inc/supermaven-nvim" },
+
+	--- Plugins to get Typst Preview
+	{ src = "https://github.com/chomosuke/typst-preview.nvim" },
 
 	--- Plugins to get Copilot
 	{ src = "https://github.com/CopilotC-Nvim/CopilotChat.nvim" },
@@ -1249,6 +1252,46 @@ hipatterns.setup({
 			group = hsl_group,
 		},
 	},
+})
+
+--------------------------------------------------
+--- Typst Preview
+--------------------------------------------------
+require("typst-preview").setup({
+	debug = false,
+	-- Custom format string to open the output link provided with %s
+	-- Example: open_cmd = 'firefox %s -P typst-preview --class typst-preview'
+	open_cmd = nil,
+	-- Custom port to open the preview server. Default is random.
+	port = 8000,
+	-- Custom host to bind the preview server to.
+	host = "127.0.0.1",
+	invert_colors = "never",
+	-- Whether the preview will follow the cursor in the source file
+	follow_cursor = true,
+	dependencies_bin = {
+		tinymist = nil,
+		websocat = nil,
+	},
+	-- For example, extra_args = { "--input=ver=draft", "--ignore-system-fonts" }
+	extra_args = nil,
+	-- This function will be called to determine the root of the typst project
+	get_root = function(path_of_main_file)
+		local root = os.getenv("TYPST_ROOT")
+		if root then
+			return root
+		end
+		-- Look for a project marker so imports from parent dirs stay inside root
+		local main_dir = vim.fs.dirname(vim.fn.fnamemodify(path_of_main_file, ":p"))
+		local found = vim.fs.find({ "typst.toml", ".git" }, { path = main_dir, upward = true })
+		if #found > 0 then
+			return vim.fs.dirname(found[1])
+		end
+		return main_dir
+	end,
+	get_main_file = function(path_of_buffer)
+		return path_of_buffer
+	end,
 })
 
 --------------------------------------------------
