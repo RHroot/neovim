@@ -9,6 +9,18 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 	end,
 })
 
+--- VirtualEdit Mode (for better cursor placement)
+vim.api.nvim_create_autocmd("ModeChanged", {
+	pattern = "*",
+	callback = function()
+		if vim.fn.mode() == "n" then
+			vim.opt.virtualedit = "all"
+		else
+			vim.opt.virtualedit = ""
+		end
+	end,
+})
+
 --- Black background theme
 local BLACK = "#000000"
 
@@ -212,7 +224,7 @@ end
 vim.opt.undodir = undodir
 
 --- System & Performance
-vim.opt.clipboard = ""
+vim.opt.clipboard = "unnamedplus"
 vim.opt.splitbelow = true
 vim.opt.timeout = true
 vim.opt.timeoutlen = 500
@@ -282,17 +294,17 @@ map("n", "<leader>sv", ":vsplit<CR>", { noremap = true, silent = true })
 map("n", "<leader>sh", ":split<CR>", { noremap = true, silent = true })
 
 --- Prime's remaps
-map("v", "K", ":m '<-2<CR>gv=gv", { noremap = true, silent = true })
-map("v", "J", ":m '>+1<CR>gv=gv", { noremap = true, silent = true })
 map("n", "J", "mzJ`z", { noremap = true, silent = true })
-map("n", "<C-d>", "<C-d>zz", { noremap = true, silent = true })
-map("n", "<C-u>", "<C-u>zz", { noremap = true, silent = true })
 map("n", "n", "nzzzv", { noremap = true, silent = true })
 map("n", "N", "Nzzzv", { noremap = true, silent = true })
-map({ "n", "v" }, "<leader>y", [["+y]], { noremap = true, silent = true })
+map("n", "<C-d>", "<C-d>zz", { noremap = true, silent = true })
+map("n", "<C-u>", "<C-u>zz", { noremap = true, silent = true })
 map("n", "<leader>Y", [["+Y]], { noremap = true, silent = true })
-map({ "n", "v" }, "<leader>d", '"_d', { noremap = true, silent = true })
 map("x", "<leader>p", [["_dP]], { noremap = true, silent = true })
+map("v", "K", ":m '<-2<CR>gv=gv", { noremap = true, silent = true })
+map("v", "J", ":m '>+1<CR>gv=gv", { noremap = true, silent = true })
+map({ "n", "v" }, "<leader>d", '"_d', { noremap = true, silent = true })
+map({ "n", "v" }, "<leader>y", [["+y]], { noremap = true, silent = true })
 
 ----------------------------------------------------------
 --- Plugins Will Added Here
