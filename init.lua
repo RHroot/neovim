@@ -363,7 +363,7 @@ require("mason-tool-installer").setup({
 		"zls",
 		"nil",
 		"jdtls",
-		"clangd",
+		-- "clangd", -- TODO: clangd is not working properly with NixOS but works good with standard linux
 		"rust-analyzer",
 		"python-lsp-server",
 		"lua-language-server",
@@ -466,9 +466,22 @@ local servers = {
 			"--clang-tidy",
 			"--background-index",
 			"--header-insertion=never",
+			"--query-driver=/run/current-system/sw/bin/gcc,/run/current-system/sw/bin/clang", -- HACK: This is for NixOS
+			-- "--query-driver=/usr/bin/gcc,/usr/bin/clang", -- HACK: This is for Standard Linux
+			"--compile-commands-dir=.",
 		},
 		filetypes = { "c", "cpp", "objc", "objcpp", "cuda", "proto" },
 		root_markers = { ".clangd", ".clang-tidy", ".clang-format", "compile_commands.json", ".git" },
+		init_options = {
+			clangd = {
+				headerInsertion = "never",
+			},
+		},
+		env = {
+			CPATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include",
+			C_INCLUDE_PATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include",
+			CPLUS_INCLUDE_PATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include",
+		},
 	},
 	tailwindcss = {
 		cmd = { "tailwindcss-language-server", "--stdio" },
@@ -883,7 +896,6 @@ end
 mini_notify.setup({
 	window = {
 		config = { border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" } },
-		max_width_share = 0.382,
 	},
 	lsp_progress = {
 		enable = true,
@@ -891,25 +903,14 @@ mini_notify.setup({
 	},
 })
 
-vim.notify = mini_notify.make_notify()
+vim.notify = mini_notify.make_notify({
+	ERROR = { duration = 5000 },
+	WARN = { duration = 4000 },
+	INFO = { duration = 3000 },
+})
 
 map("n", "<leader>nd", mini_notify.clear, { desc = "Dismiss all notifications" })
 map("n", "<leader>nh", mini_notify.show_history, { desc = "Notification history" })
-
-vim.lsp.handlers["window/showMessage"] = function(_, result, ctx)
-	local client = vim.lsp.get_client_by_id(ctx.client_id)
-	local level_map = {
-		[1] = vim.log.levels.ERROR,
-		[2] = vim.log.levels.WARN,
-		[3] = vim.log.levels.INFO,
-		[4] = vim.log.levels.DEBUG,
-	}
-	local level = level_map[result.type] or vim.log.levels.INFO
-	local title = "LSP: " .. (client and client.name or "Unknown")
-	local msg = result.message and (title .. "\n" .. result.message) or title
-
-	vim.notify(msg, level)
-end
 
 --------------------------------------------------
 --- Git
