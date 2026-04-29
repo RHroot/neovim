@@ -895,7 +895,11 @@ end
 
 mini_notify.setup({
 	window = {
-		config = { border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" } },
+		config = {
+			row = vim.o.lines,
+			border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" },
+		},
+		max_width_share = 0.400,
 	},
 	lsp_progress = {
 		enable = true,
