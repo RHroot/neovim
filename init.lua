@@ -1346,7 +1346,7 @@ if has_chat then
 		context = "buffers",
 		window = {
 			layout = "float",
-			width = 80,
+			width = 100,
 			height = 80,
 			border = "rounded",
 			title = "🤖 AI Assistant",
