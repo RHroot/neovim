@@ -879,24 +879,6 @@ vim.keymap.set("n", "<leader>sd", function()
 end, { desc = "Delete Session" })
 
 --------------------------------------------------
---- AutoPairs
---------------------------------------------------
-require("mini.pairs").setup({
-	modes = { insert = true, command = true, terminal = false },
-	mappings = {
-		["("] = { action = "open", pair = "()", neigh_pattern = "[^\\]." },
-		["["] = { action = "open", pair = "[]", neigh_pattern = "[^\\]." },
-		["{"] = { action = "open", pair = "{}", neigh_pattern = "[^\\]." },
-		["<"] = { action = "open", pair = "<>", neigh_pattern = "[^\\]." },
-
-		[")"] = { action = "close", pair = "()", neigh_pattern = "[^\\]." },
-		["]"] = { action = "close", pair = "[]", neigh_pattern = "[^\\]." },
-		["}"] = { action = "close", pair = "{}", neigh_pattern = "[^\\]." },
-		[">"] = { action = "close", pair = "<>", neigh_pattern = "[^\\]." },
-	},
-})
-
---------------------------------------------------
 --- Notifications
 --------------------------------------------------
 local ok, mini_notify = pcall(require, "mini.notify")
