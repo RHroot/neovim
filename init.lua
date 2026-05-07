@@ -993,7 +993,7 @@ local rg_conf = vim.fn.stdpath("data") .. "/ripgrep.conf"
 if vim.fn.filereadable(rg_conf) == 0 then
 	local f = io.open(rg_conf, "w")
 	if f then
-		f:write("--hidden\n--glob=!.git/*\n")
+		f:write("--no-ignore\n--hidden\n--glob=!.git/*\n")
 		f:close()
 	end
 end
