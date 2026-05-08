@@ -658,7 +658,6 @@ conform.setup({
 		--- Infra / scripts
 		sh = { "shfmt" },
 		bash = { "shfmt" },
-		fish = { "fishfmt" },
 		nix = { "alejandra" },
 		dockerfile = { "shfmt" },
 		hyprlang = { "shfmt" },
@@ -677,11 +676,6 @@ conform.setup({
 	},
 
 	formatters = {
-		fishfmt = {
-			command = "fish_indent",
-			args = { "$FILENAME" },
-			stdin = true,
-		},
 		zigfmt = {
 			command = "zig",
 			args = { "fmt", "$FILENAME" },
