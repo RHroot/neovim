@@ -120,7 +120,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		map("n", "<leader>lw", function()
 			print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
 		end, "List workspace folders")
-		map("n", "<leader>sw", vim.lsp.buf.workspace_symbol, "Search workspace symbols")
 
 		--- Actions
 		map("n", "<leader>ca", vim.lsp.buf.code_action, "Code action")
