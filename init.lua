@@ -323,21 +323,11 @@ vim.pack.add({
 	--- Plugins for Formatting
 	{ src = "https://github.com/stevearc/conform.nvim" },
 
-	--- Plugins for Parsers
-	{ src = "https://github.com/nvim-treesitter/nvim-treesitter", build = ":TSUpdate", branch = "main" },
-
 	--- Plugins that can be quite useful if you know how to use them from Mini.nvim
 	{ src = "https://github.com/nvim-mini/mini.nvim" },
 
 	--- Plugins for AI Completion
 	{ src = "https://github.com/supermaven-inc/supermaven-nvim" },
-
-	--- Plugins to get Typst Preview
-	{ src = "https://github.com/chomosuke/typst-preview.nvim" },
-
-	--- Plugins to get Copilot
-	{ src = "https://github.com/CopilotC-Nvim/CopilotChat.nvim" },
-	{ src = "https://github.com/nvim-lua/plenary.nvim" },
 })
 
 --------------------------------------------------
@@ -710,67 +700,6 @@ map("v", "<leader>f", function()
 		},
 	})
 end, { desc = "[F]ormat selection" })
-
---------------------------------------------------
---- Treesitter
---------------------------------------------------
-local ts = require("nvim-treesitter")
-ts.setup({
-	sync_install = true,
-	auto_install = true,
-	highlight = { enable = true },
-	indent = { enable = true },
-})
-ts.install({
-	"c",
-	"go",
-	"cpp",
-	"zig",
-	"lua",
-	"php",
-	"css",
-	"vim",
-	"csv",
-	"vue",
-	"nix",
-	"make",
-	"rust",
-	"java",
-	"bash",
-	"ruby",
-	"perl",
-	"dart",
-	"json",
-	"html",
-	"scss",
-	"yaml",
-	"toml",
-	"diff",
-	"just",
-	"http",
-	"latex",
-	"regex",
-	"query",
-	"vimdoc",
-	"swift",
-	"cmake",
-	"astro",
-	"svelte",
-	"kotlin",
-	"python",
-	"elixir",
-	"haskell",
-	"graphql",
-	"markdown",
-	"gitcommit",
-	"gitignore",
-	"javascript",
-	"git_rebase",
-	"typescript",
-	"dockerfile",
-	"gitattributes",
-	"markdown_inline",
-})
 
 --------------------------------------------------
 --- Mini ( One line setup Plugins )
@@ -1250,46 +1179,6 @@ hipatterns.setup({
 })
 
 --------------------------------------------------
---- Typst Preview
---------------------------------------------------
-require("typst-preview").setup({
-	debug = false,
-	-- Custom format string to open the output link provided with %s
-	-- Example: open_cmd = 'firefox %s -P typst-preview --class typst-preview'
-	open_cmd = nil,
-	-- Custom port to open the preview server. Default is random.
-	port = 8000,
-	-- Custom host to bind the preview server to.
-	host = "127.0.0.1",
-	invert_colors = "never",
-	-- Whether the preview will follow the cursor in the source file
-	follow_cursor = true,
-	dependencies_bin = {
-		tinymist = nil,
-		websocat = nil,
-	},
-	-- For example, extra_args = { "--input=ver=draft", "--ignore-system-fonts" }
-	extra_args = nil,
-	-- This function will be called to determine the root of the typst project
-	get_root = function(path_of_main_file)
-		local root = os.getenv("TYPST_ROOT")
-		if root then
-			return root
-		end
-		-- Look for a project marker so imports from parent dirs stay inside root
-		local main_dir = vim.fs.dirname(vim.fn.fnamemodify(path_of_main_file, ":p"))
-		local found = vim.fs.find({ "typst.toml", ".git" }, { path = main_dir, upward = true })
-		if #found > 0 then
-			return vim.fs.dirname(found[1])
-		end
-		return main_dir
-	end,
-	get_main_file = function(path_of_buffer)
-		return path_of_buffer
-	end,
-})
-
---------------------------------------------------
 --- AI Completion
 --------------------------------------------------
 require("supermaven-nvim").setup({
@@ -1306,51 +1195,6 @@ require("supermaven-nvim").setup({
 		return false
 	end,
 })
-
---------------------------------------------------
---- Copilot
---------------------------------------------------
-local has_chat, chat = pcall(require, "CopilotChat")
-if has_chat then
-	chat.setup({
-
-		model = "claude-haiku-4.5",
-		temperature = 0.1,
-
-		auto_insert_mode = true,
-		context = "buffers",
-		window = {
-			layout = "float",
-			width = 100,
-			height = 80,
-			border = "rounded",
-			title = "🤖 AI Assistant",
-			zindex = 100,
-		},
-
-		headers = {
-			user = "👤 You",
-			assistant = "🤖 Copilot",
-			tool = "🔧 Tool",
-		},
-
-		separator = "━━",
-		auto_fold = true,
-	})
-
-	map("n", "<leader>cc", "<cmd>CopilotChatToggle<cr>", { desc = "Copilot Chat" })
-
-	vim.api.nvim_create_autocmd("BufEnter", {
-		pattern = "copilot-*",
-		callback = function()
-			vim.opt_local.number = true
-			vim.opt_local.relativenumber = true
-			vim.opt_local.signcolumn = "no"
-			vim.opt_local.wrap = true
-			vim.opt_local.linebreak = true
-		end,
-	})
-end
 
 --------------------------------------------------
 --- For running files inside neovim
