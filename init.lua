@@ -432,7 +432,7 @@ local servers = {
 		settings = {
 			Lua = {
 				diagnostics = {
-					globals = { "vim" },
+					globals = { "vim", "hl" },
 				},
 				workspace = {
 					library = vim.api.nvim_get_runtime_file("", true),
