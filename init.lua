@@ -277,7 +277,7 @@ if has_tokyonight then
 			comments = { italic = true },
 			keywords = { italic = true },
 			functions = { bold = true },
-			variables = { bold = true, italic = true },
+			variables = { bold = true },
 			sidebars = "transparent",
 			floats = "transparent",
 		},
@@ -920,10 +920,10 @@ map("n", "<leader>rl", "<cmd>Pick resume<CR>", { desc = "Resume Last Picker" })
 local st = require("mini.statusline")
 
 -- Tokyonight colors
-local bg = "#1a1b26"
-local bg_alt = "#24283b"
-local fg = "#c0caf5"
-local comment = "#3b4261"
+local sbg = "#1a1b26"
+local sbg_alt = "#24283b"
+local sfg = "#c0caf5"
+local scomment = "#3b4261"
 
 -- Accent colors
 local cyan = "#7dcfff"
@@ -934,20 +934,20 @@ local orange = "#ff9e64"
 local red = "#f7768e"
 
 -- Set highlights
-vim.api.nvim_set_hl(0, "StatusLine", { bg = bg, fg = fg })
-vim.api.nvim_set_hl(0, "StatusLineNC", { bg = bg_alt, fg = comment })
-vim.api.nvim_set_hl(0, "StatusLineGit", { fg = orange, bg = bg })
-vim.api.nvim_set_hl(0, "StatusLineDiff", { fg = green, bg = bg })
-vim.api.nvim_set_hl(0, "StatusLineLsp", { fg = blue, bg = bg })
-vim.api.nvim_set_hl(0, "StatusLineDiag", { fg = red, bg = bg, bold = true })
-vim.api.nvim_set_hl(0, "MiniStatuslineFilename", { fg = purple, bg = bg, bold = true })
+vim.api.nvim_set_hl(0, "StatusLine", { bg = sbg, fg = sfg })
+vim.api.nvim_set_hl(0, "StatusLineNC", { bg = sbg_alt, fg = scomment })
+vim.api.nvim_set_hl(0, "StatusLineGit", { fg = orange, bg = sbg })
+vim.api.nvim_set_hl(0, "StatusLineDiff", { fg = green, bg = sbg })
+vim.api.nvim_set_hl(0, "StatusLineLsp", { fg = blue, bg = sbg })
+vim.api.nvim_set_hl(0, "StatusLineDiag", { fg = red, bg = sbg, bold = true })
+vim.api.nvim_set_hl(0, "MiniStatuslineFilename", { fg = purple, bg = sbg, bold = true })
 
 -- Mode colors (high contrast)
-vim.api.nvim_set_hl(0, "MiniStatuslineModeNormal", { fg = bg, bg = blue, bold = true })
-vim.api.nvim_set_hl(0, "MiniStatuslineModeInsert", { fg = bg, bg = green, bold = true })
-vim.api.nvim_set_hl(0, "MiniStatuslineModeVisual", { fg = bg, bg = purple, bold = true })
-vim.api.nvim_set_hl(0, "MiniStatuslineModeReplace", { fg = bg, bg = cyan, bold = true })
-vim.api.nvim_set_hl(0, "MiniStatuslineModeCommand", { fg = bg, bg = red, bold = true })
+vim.api.nvim_set_hl(0, "MiniStatuslineModeNormal", { fg = sbg, bg = blue, bold = true })
+vim.api.nvim_set_hl(0, "MiniStatuslineModeInsert", { fg = sbg, bg = green, bold = true })
+vim.api.nvim_set_hl(0, "MiniStatuslineModeVisual", { fg = sbg, bg = purple, bold = true })
+vim.api.nvim_set_hl(0, "MiniStatuslineModeReplace", { fg = sbg, bg = cyan, bold = true })
+vim.api.nvim_set_hl(0, "MiniStatuslineModeCommand", { fg = sbg, bg = red, bold = true })
 
 -- Helper functions
 local function lsp()
