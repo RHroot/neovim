@@ -21,72 +21,6 @@ vim.api.nvim_create_autocmd("ModeChanged", {
 	end,
 })
 
---- Black background theme
-local BLACK = "#000000"
-
-local theme_applied = false
-local function apply_black_theme()
-	if theme_applied then
-		return
-	end
-	theme_applied = true
-
-	--- Core
-	vim.api.nvim_set_hl(0, "Normal", { bg = BLACK })
-	vim.api.nvim_set_hl(0, "NormalNC", { bg = BLACK })
-	vim.api.nvim_set_hl(0, "EndOfBuffer", { bg = BLACK })
-	vim.api.nvim_set_hl(0, "SignColumn", { bg = BLACK })
-
-	--- Line numbers
-	vim.api.nvim_set_hl(0, "LineNr", {
-		fg = "#4a4a4a",
-		bg = BLACK,
-	})
-	vim.api.nvim_set_hl(0, "CursorLineNr", {
-		fg = "#F09676",
-		bg = BLACK,
-		bold = true,
-	})
-
-	--- Floats
-	vim.api.nvim_set_hl(0, "NormalFloat", { bg = BLACK })
-	vim.api.nvim_set_hl(0, "FloatBorder", { fg = "#F09676", bg = BLACK })
-
-	--- Diagnostic floats
-	vim.api.nvim_set_hl(0, "DiagnosticFloatingError", { bg = BLACK })
-	vim.api.nvim_set_hl(0, "DiagnosticFloatingWarn", { bg = BLACK })
-	vim.api.nvim_set_hl(0, "DiagnosticFloatingInfo", { bg = BLACK })
-	vim.api.nvim_set_hl(0, "DiagnosticFloatingHint", { bg = BLACK })
-end
-
---- Apply only to real code buffers
-local function is_code_buffer(buf)
-	return vim.bo[buf].buftype == ""
-end
-
---- Autocommands (robust + race-free)
-vim.api.nvim_create_autocmd("ColorScheme", {
-	callback = function()
-		theme_applied = false
-		apply_black_theme()
-	end,
-})
-
-vim.api.nvim_create_autocmd({ "BufEnter", "WinEnter" }, {
-	callback = function(ev)
-		if is_code_buffer(ev.buf) then
-			apply_black_theme()
-		end
-	end,
-})
-
---- Ensure startup correctness even if colorscheme loads first
-vim.api.nvim_create_autocmd("VimEnter", {
-	callback = function()
-		vim.cmd("doautocmd ColorScheme")
-	end,
-})
-
 --- LSP keymaps
 local lsp_group = vim.api.nvim_create_augroup("lsp-attach", { clear = true })
 
@@ -235,7 +169,7 @@ vim.opt.foldenable = false
 vim.opt.foldlevel = 0
 
 --- Neovide Specifics
-vim.opt.guifont = "JetBrainsMono Nerd Font:h18"
+vim.opt.guifont = "FiraCode Nerd Font:h18"
 vim.opt.background = "dark"
 vim.g.neovide_padding_top = 0
 vim.g.neovide_padding_bottom = 0
@@ -431,11 +365,20 @@ local servers = {
 		root_markers = { ".luarc.json", ".git" },
 		settings = {
 			Lua = {
+				runtime = {
+					version = "LuaJIT",
+				},
 				diagnostics = {
 					globals = { "vim" },
 				},
 				workspace = {
-					library = vim.api.nvim_get_runtime_file("", true),
+					library = vim.tbl_deep_extend(
+						"force",
+						--- This is a hack to make sure that the runtime is found for neovim
+						vim.api.nvim_get_runtime_file("", true),
+						--- This is a hack to make sure that the stubs are found for hyprland
+						{ "/run/current-system/sw/share/hypr/stubs" }
+					),
 					checkThirdParty = false,
 				},
 			},
@@ -812,7 +755,7 @@ end
 mini_notify.setup({
 	window = {
 		config = {
-			row = vim.o.lines,
+			row = 1,
 			border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" },
 		},
 		max_width_share = 0.400,
@@ -972,85 +915,87 @@ map("n", "<leader>hp", "<cmd>Pick help<CR>", { desc = "Help Tags" })
 map("n", "<leader>rl", "<cmd>Pick resume<CR>", { desc = "Resume Last Picker" })
 
 --------------------------------------------------
---- Statusline
+--- Mini Statusline
 --------------------------------------------------
-local statusline = require("mini.statusline")
+local st = require("mini.statusline")
 
-local function get_lsp()
+-- Tokyonight colors
+local bg = "#1a1b26"
+local bg_alt = "#24283b"
+local fg = "#c0caf5"
+local comment = "#3b4261"
+
+-- Accent colors
+local cyan = "#7dcfff"
+local blue = "#7aa2f7"
+local purple = "#bb9af7"
+local green = "#9ece6a"
+local orange = "#ff9e64"
+local red = "#f7768e"
+
+-- Set highlights
+vim.api.nvim_set_hl(0, "StatusLine", { bg = bg, fg = fg })
+vim.api.nvim_set_hl(0, "StatusLineNC", { bg = bg_alt, fg = comment })
+vim.api.nvim_set_hl(0, "StatusLineGit", { fg = orange, bg = bg })
+vim.api.nvim_set_hl(0, "StatusLineDiff", { fg = green, bg = bg })
+vim.api.nvim_set_hl(0, "StatusLineLsp", { fg = blue, bg = bg })
+vim.api.nvim_set_hl(0, "StatusLineDiag", { fg = red, bg = bg, bold = true })
+vim.api.nvim_set_hl(0, "MiniStatuslineFilename", { fg = purple, bg = bg, bold = true })
+
+-- Mode colors (high contrast)
+vim.api.nvim_set_hl(0, "MiniStatuslineModeNormal", { fg = bg, bg = blue, bold = true })
+vim.api.nvim_set_hl(0, "MiniStatuslineModeInsert", { fg = bg, bg = green, bold = true })
+vim.api.nvim_set_hl(0, "MiniStatuslineModeVisual", { fg = bg, bg = purple, bold = true })
+vim.api.nvim_set_hl(0, "MiniStatuslineModeReplace", { fg = bg, bg = cyan, bold = true })
+vim.api.nvim_set_hl(0, "MiniStatuslineModeCommand", { fg = bg, bg = red, bold = true })
+
+-- Helper functions
+local function lsp()
 	local clients = vim.lsp.get_clients({ bufnr = 0 })
 	if #clients == 0 then
-		return "󱏐 "
+		return ""
 	end
-
 	local names = {}
 	for _, client in ipairs(clients) do
 		table.insert(names, client.name)
 	end
-	return " " .. table.concat(names, "󰇙") --- Using a subtle separator
+	return " " .. table.concat(names, " ")
 end
 
-local function get_file_size()
-	local size = vim.fn.getfsize(vim.fn.expand("%:p"))
-	if size <= 0 then
+local function size()
+	local s = vim.fn.getfsize(vim.fn.expand("%:p"))
+	if s <= 0 then
 		return ""
 	end
 	local units = { "B", "K", "M", "G" }
 	local i = 1
-	while size > 1024 and i < #units do
-		size = size / 1024
+	while s > 1024 and i < #units do
+		s = s / 1024
 		i = i + 1
 	end
-	return string.format("󰗮 %.1f%s", size, units[i])
+	return string.format("󰗮 %.1f%s", s, units[i])
 end
 
-statusline.setup({
+-- Setup
+st.setup({
 	content = {
 		active = function()
-			local mode, mode_hl = statusline.section_mode({ trunc_width = 120 })
-			local git = statusline.section_git({ trunc_width = 40 })
-			local diff = statusline.section_diff({ trunc_width = 75 })
-			local diag = statusline.section_diagnostics({ trunc_width = 75 })
-			local filename = statusline.section_filename({ trunc_width = 140 })
-			local fileinfo = statusline.section_fileinfo({ trunc_width = 120 })
-			local location = statusline.section_location({ trunc_width = 75 })
-
-			return statusline.combine_groups({
+			local mode, mode_hl = st.section_mode({ trunc_width = 120 })
+			return st.combine_groups({
 				{ hl = mode_hl, strings = { mode } },
-				{ hl = "StatusLineGit", strings = { git } },
-				{ hl = "StatusLineDiff", strings = { diff } },
-				"%<", --- Truncate point
-				{ hl = "MiniStatuslineFilename", strings = { filename } },
-				"%=", --- Right align
-				{ hl = "StatusLineLsp", strings = { get_lsp() } },
-				{ hl = "StatusLineDiag", strings = { diag } },
-				{ hl = "MiniStatuslineFileinfo", strings = { get_file_size(), fileinfo } },
-				{ hl = mode_hl, strings = { location } },
+				{ hl = "StatusLineGit", strings = { st.section_git({ trunc_width = 40 }) } },
+				{ hl = "StatusLineDiff", strings = { st.section_diff({ trunc_width = 75 }) } },
+				"%<",
+				{ hl = "MiniStatuslineFilename", strings = { st.section_filename({ trunc_width = 140 }) } },
+				"%=",
+				{ hl = "StatusLineLsp", strings = { lsp() } },
+				{ hl = "StatusLineDiag", strings = { st.section_diagnostics({ trunc_width = 75 }) } },
+				{ hl = "MiniStatuslineFileinfo", strings = { size() } },
+				{ hl = mode_hl, strings = { st.section_location({ trunc_width = 75 }) } },
 			})
 		end,
 	},
 })
-
-local hi = function(name, opts)
-	vim.api.nvim_set_hl(0, name, opts)
-end
-
---- Base background for the whole bar
-hi("StatusLine", { bg = "#181825", fg = "#cdd6f4" })
---- Left side: Blue/Peach tones for Project info
-hi("StatusLineGit", { fg = "#89b4fa", bg = "#313244", bold = true })
-hi("StatusLineDiff", { fg = "#fab387", bg = "#313244" })
---- Middle: Clean and readable
-hi("MiniStatuslineFilename", { fg = "#cdd6f4", bg = "#181825", italic = true })
---- Right side: Green/Mauve for Environment info
-hi("StatusLineLsp", { fg = "#a6e3a1", bg = "#313244" })
-hi("StatusLineDiag", { fg = "#f38ba8", bg = "#313244" })
-hi("MiniStatuslineFileinfo", { fg = "#bac2de", bg = "#313244" })
---- Mode Overrides (Optional: Makes mode colors pop more)
-hi("MiniStatuslineModeNormal", { fg = "#1e1e2e", bg = "#89b4fa", bold = true })
-hi("MiniStatuslineModeInsert", { fg = "#1e1e2e", bg = "#a6e3a1", bold = true })
-hi("MiniStatuslineModeVisual", { fg = "#1e1e2e", bg = "#cba6f7", bold = true })
-hi("MiniStatuslineModeReplace", { fg = "#1e1e2e", bg = "#f38ba8", bold = true })
-hi("MiniStatuslineModeCommand", { fg = "#1e1e2e", bg = "#f9e2af", bold = true })
 
 --------------------------------------------------
 --- Mini Hipatterns
