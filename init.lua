@@ -314,7 +314,7 @@ require("mason-tool-installer").setup({
 		"shfmt",
 		"stylua",
 		"sqruff",
-		"alejandra",
+		"nixfmt",
 		"prettierd",
 		"clang-format",
 		"google-java-format",
@@ -574,7 +574,7 @@ conform.setup({
 		--- Infra / scripts
 		sh = { "shfmt" },
 		bash = { "shfmt" },
-		nix = { "alejandra" },
+		nix = { "nixfmt" },
 		dockerfile = { "shfmt" },
 		hyprlang = { "shfmt" },
 
