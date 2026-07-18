@@ -394,8 +394,8 @@ local servers = {
 			"--clang-tidy",
 			"--background-index",
 			"--header-insertion=never",
-			"--query-driver=/run/current-system/sw/bin/gcc,/run/current-system/sw/bin/clang", -- HACK: This is for NixOS
-			-- "--query-driver=/usr/bin/gcc,/usr/bin/clang", -- HACK: This is for Standard Linux
+			"--query-driver=/run/current-system/sw/bin/gcc,/run/current-system/sw/bin/clang", -- NOTE: This is for NixOS
+			-- "--query-driver=/usr/bin/gcc,/usr/bin/clang", -- NOTE: This is for Standard Linux
 			"--compile-commands-dir=.",
 		},
 		filetypes = { "c", "cpp", "objc", "objcpp", "cuda", "proto" },
@@ -1089,10 +1089,10 @@ end
 --- Setup
 hipatterns.setup({
 	highlighters = {
-		fixme = { pattern = "%f[%w_]()FIXME()%f[^%w_]", group = "MiniHipatternsFixme" },
-		hack = { pattern = "%f[%w_]()HACK()%f[^%w_]", group = "MiniHipatternsHack" },
-		todo = { pattern = "%f[%w_]()TODO()%f[^%w_]", group = "MiniHipatternsTodo" },
 		note = { pattern = "%f[%w_]()NOTE()%f[^%w_]", group = "MiniHipatternsNote" },
+		todo = { pattern = "%f[%w_]()TODO()%f[^%w_]", group = "MiniHipatternsTodo" },
+		hack = { pattern = "%f[%w_]()HACK()%f[^%w_]", group = "MiniHipatternsHack" },
+		fixme = { pattern = "%f[%w_]()FIXME()%f[^%w_]", group = "MiniHipatternsFixme" },
 		hex_alpha = { pattern = "#%x%x%x%x%x%x%x%x%f[%X]", group = alpha_hex_group },
 		hex = { pattern = "#%x%x%x%x%x%x%f[%X]", group = hex_group },
 		hex_short = { pattern = "#%x%x%x%f[%X]", group = short_hex_group },
