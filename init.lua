@@ -296,7 +296,6 @@ require("mason-tool-installer").setup({
 	ensure_installed = {
 		--- LSP's installed through mason
 		"zls",
-		"nil",
 		"jdtls",
 		-- "clangd", -- TODO: clangd is not working properly with NixOS but works good with standard linux
 		"rust-analyzer",
@@ -388,21 +387,6 @@ local servers = {
 		cmd = { "bash-language-server", "start" },
 		filetypes = { "sh", "bash" },
 		root_markers = { ".git", ".shellcheckrc" },
-	},
-	nil_ls = {
-		cmd = { "nil" },
-		filetypes = { "nix" },
-		root_markers = { "flake.nix", ".git" },
-		settings = {
-			["nil"] = {
-				formatting = {
-					command = { "alejandra" },
-				},
-				diagnostics = {
-					ignored = { "unused_binding" },
-				},
-			},
-		},
 	},
 	clangd = {
 		cmd = {
