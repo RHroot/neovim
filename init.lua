@@ -130,7 +130,7 @@ vim.opt.expandtab = true
 vim.opt.smartindent = true
 vim.opt.autoindent = true
 vim.opt.list = true
-vim.opt.listchars = "tab:» "
+vim.opt.listchars = { tab = "» ", space = "·", trail = "✕" }
 
 --- Line Wrapping
 vim.opt.wrap = true
