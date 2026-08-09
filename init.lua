@@ -206,9 +206,6 @@ map("n", "<leader>so", ":update<CR> :source<CR>", { noremap = true, silent = fal
 map("n", "<leader>si", "<cmd>source ~/.config/nvim/init.lua<CR>", { noremap = true, silent = false })
 map({ "v", "x" }, "<C-_>", "gc", { noremap = true, desc = "Toggle comment" })
 map("n", "<C-_>", "gcc", { noremap = true, silent = true, desc = "Toggle comment" })
-map({ "n", "v", "x" }, "<leader>url", function()
-	vim.ui.open(vim.fn.expand("<cfile>"))
-end, { desc = "Open URL under cursor" })
 
 --- better movement in wrapped text
 map("n", "j", function()
@@ -246,6 +243,9 @@ vim.pack.add({
 	--- Plugins for Colorscheme
 	{ src = "https://github.com/folke/tokyonight.nvim" },
 
+	--- Undo Tree
+	{ src = "https://github.com/mbbill/undotree" },
+
 	--- Plugins for LSP
 	{ src = "https://github.com/mason-org/mason.nvim" },
 	{ src = "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim" },
@@ -263,6 +263,11 @@ vim.pack.add({
 	--- Plugins for AI Completion
 	{ src = "https://github.com/supermaven-inc/supermaven-nvim" },
 })
+
+--------------------------------------------------
+--- Undo Tree
+--------------------------------------------------
+vim.keymap.set("n", "<leader>u", vim.cmd.UndotreeToggle)
 
 --------------------------------------------------
 --- Colors
