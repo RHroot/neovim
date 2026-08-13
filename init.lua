@@ -300,68 +300,47 @@ require("mason").setup()
 require("mason-tool-installer").setup({
 	ensure_installed = {
 		--- LSP's installed through mason
-		"zls",
-		"jdtls",
-		-- "clangd", -- TODO: clangd is not working properly with NixOS but works good with standard linux
+		-- "clangd", -- TODO: clangd is not working properly like this on nixos but it will work good on traditional linux
+		"marksman",
 		"rust-analyzer",
 		"python-lsp-server",
 		"lua-language-server",
-		"bash-language-server",
-		"postgres-language-server",
-		"vtsls",
-		"css-lsp",
-		"html-lsp",
-		"typescript-language-server",
-		"tailwindcss-language-server",
 
 		--- Formatters installed through mason
 		"ruff",
 		"shfmt",
 		"stylua",
 		"sqruff",
-		"nixfmt",
-		"prettierd",
+		"mdformat",
+		"superhtml",
 		"clang-format",
-		"google-java-format",
 	},
 })
 
 --- Define all server configurations manually
 local servers = {
-	zls = {
-		cmd = { "zls" },
-		filetypes = { "zig", "zir" },
-		root_markers = { "zls.json", "build.zig", ".git" },
-	},
-	html = {
-		cmd = { "vscode-html-language-server", "--stdio" },
-		filetypes = { "html", "templ" },
-		root_markers = { "package.json", ".git" },
-	},
-	cssls = {
-		cmd = { "vscode-css-language-server", "--stdio" },
-		filetypes = { "css", "scss", "less" },
-		root_markers = { "package.json", ".git" },
-	},
-	ts_ls = {
-		cmd = { "typescript-language-server", "--stdio" },
-		filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
-		root_markers = { "tsconfig.json", "package.json", "jsconfig.json", ".git" },
-	},
-	vtsls = {
-		cmd = { "vtsls", "--stdio" },
-		filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
-		root_markers = { "tsconfig.json", "package.json", "jsconfig.json", ".git" },
-	},
 	pylsp = {
 		cmd = { "pylsp" },
 		filetypes = { "python" },
 		root_markers = { "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
 	},
-	jdtls = {
-		cmd = { "jdtls" },
-		filetypes = { "java" },
-		root_markers = { "build.gradle", "pom.xml", ".git" },
+	marksman = {
+		cmd = { "marksman", "server" },
+		filetypes = { "markdown", "markdown.mdx" },
+		root_markers = { ".marksman.toml", ".git" },
+		cmd_env = {
+			DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1",
+		},
+	},
+	rust_analyzer = {
+		cmd = { "rust-analyzer" },
+		filetypes = { "rust" },
+		root_markers = { "Cargo.toml", "rust-project.json", ".git" },
+	},
+	bashls = {
+		cmd = { "bash-language-server", "start" },
+		filetypes = { "sh", "bash" },
+		root_markers = { ".git", ".shellcheckrc" },
 	},
 	lua_ls = {
 		cmd = { "lua-language-server" },
@@ -388,11 +367,6 @@ local servers = {
 			},
 		},
 	},
-	bashls = {
-		cmd = { "bash-language-server", "start" },
-		filetypes = { "sh", "bash" },
-		root_markers = { ".git", ".shellcheckrc" },
-	},
 	clangd = {
 		cmd = {
 			"clangd",
@@ -416,27 +390,12 @@ local servers = {
 			CPLUS_INCLUDE_PATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include",
 		},
 	},
-	tailwindcss = {
-		cmd = { "tailwindcss-language-server", "--stdio" },
-		filetypes = { "html", "css", "javascriptreact", "typescriptreact", "svelte", "vue" },
-		root_markers = { "tailwind.config.js", "tailwind.config.ts", "postcss.config.js", ".git" },
-	},
-	postgres_lsp = {
-		cmd = { "postgres_lsp" },
-		filetypes = { "sql" },
-		root_markers = { ".git" },
-	},
-	rust_analyzer = {
-		cmd = { "rust-analyzer" },
-		filetypes = { "rust" },
-		root_markers = { "Cargo.toml", "rust-project.json", ".git" },
-	},
 }
 
 --- Setup base blink
 local has_blink, blink = pcall(require, "blink.cmp")
-
---- Apply configurations
+--
+-- --- Apply configurations
 for server_name, config in pairs(servers) do
 	local capabilities = vim.lsp.protocol.make_client_capabilities()
 	config.capabilities = blink.get_lsp_capabilities(capabilities)
@@ -558,23 +517,29 @@ conform.setup({
 	formatters_by_ft = {
 		--- Core languages
 		lua = { "stylua" },
+		rust = { "rustfmt" },
+		c = { "clang-format" },
+		cpp = { "clang-format" },
 		python = { "ruff_organize_imports", "ruff_format" },
 
 		--- Web / frontend
-		javascript = { "prettierd" },
-		javascriptreact = { "prettierd" },
-		typescript = { "prettierd" },
-		typescriptreact = { "prettierd" },
-		html = { "prettierd" },
 		css = { "prettierd" },
+		vue = { "prettierd" },
 		scss = { "prettierd" },
 		less = { "prettierd" },
 		json = { "prettierd" },
-		jsonc = { "prettierd" },
-		markdown = { "prettierd" },
-		vue = { "prettierd" },
-		svelte = { "prettierd" },
 		yaml = { "prettierd" },
+		toml = { "prettierd" },
+		jsonc = { "prettierd" },
+		svelte = { "prettierd" },
+		javascript = { "prettierd" },
+		typescript = { "prettierd" },
+		javascriptreact = { "prettierd" },
+		typescriptreact = { "prettierd" },
+
+		--- Independent Ones
+		html = { "superhtml" },
+		markdown = { "mdformat" },
 
 		--- Infra / scripts
 		sh = { "shfmt" },
@@ -583,25 +548,11 @@ conform.setup({
 		dockerfile = { "shfmt" },
 		hyprlang = { "shfmt" },
 
-		--- Compiled / typed
-		c = { "clang-format" },
-		cpp = { "clang-format" },
-		go = { "gofumpt", "goimports" },
-		rust = { "rustfmt" },
-		java = { "google-java-format" },
-		zig = { "zigfmt" },
-
 		--- Data / query
 		sql = { "sqruff" },
-		toml = { "prettierd" },
 	},
 
 	formatters = {
-		zigfmt = {
-			command = "zig",
-			args = { "fmt", "$FILENAME" },
-			stdin = true,
-		},
 		shfmt = {
 			command = "shfmt",
 			args = { "-i", "2", "-bn", "-ci", "-ln", "bash" },
@@ -612,6 +563,9 @@ conform.setup({
 			args = { "format", "-" },
 			stdin = true,
 		},
+	},
+	default_format_opts = {
+		lsp_format = "fallback",
 	},
 })
 
