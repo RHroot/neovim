@@ -1093,8 +1093,8 @@ local runners = {
 	sh = "bash %",
 	javascript = "node %",
 	typescript = "ts-node %",
-	c = "gcc % -o %< && ./%<",
-	cpp = "g++ % -std=c++17 -O2 -o %< && ./%<",
+	c = "clang % -o %< && ./%<",
+	cpp = "clang++ % -std=c++17 -O2 -o %< && ./%<",
 	rust = "rustc % -o %< && ./%<",
 	go = "go run %",
 	java = "javac % && java %<",
@@ -1106,12 +1106,17 @@ local runners = {
 
 vim.keymap.set("n", "<leader>rn", function()
 	vim.cmd("w")
-	local cmd = runners[vim.bo.filetype]
+	local cmd_template = runners[vim.bo.filetype]
 
-	if not cmd then
+	if not cmd_template then
 		print("No runner for " .. vim.bo.filetype)
 		return
 	end
+
+	local file = vim.fn.expand("%")
+	local file_no_ext = vim.fn.expand("%<")
+
+	local cmd = cmd_template:gsub("%%<", file_no_ext):gsub("%%", file)
 
 	vim.cmd("split | resize 12 | terminal " .. cmd)
 	vim.cmd("startinsert")
