@@ -262,6 +262,9 @@ vim.pack.add({
 
 	--- Plugins for AI Completion
 	{ src = "https://github.com/supermaven-inc/supermaven-nvim" },
+
+	--- Plugins for Rendering Markson
+	{ src = "https://github.com/MeanderingProgrammer/render-markdown.nvim" },
 })
 
 --------------------------------------------------
