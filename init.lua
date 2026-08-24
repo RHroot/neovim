@@ -263,8 +263,8 @@ vim.pack.add({
 	--- Plugins for AI Completion
 	{ src = "https://github.com/supermaven-inc/supermaven-nvim" },
 
-	--- Plugins for Rendering Markson
-	{ src = "https://github.com/MeanderingProgrammer/render-markdown.nvim" },
+	--- Plugins for Markdown Preview
+	{ src = "https://github.com/vihu/penview.nvim" },
 })
 
 --------------------------------------------------
@@ -299,10 +299,31 @@ end
 --------------------------------------------------
 --- Markdown Rendering
 --------------------------------------------------
-require("render-markdown").setup({
-	completions = { lsp = { enabled = true } },
+local bin_exists = false
+local bin_paths = {
+	"bin/penview",
+	"penview",
+	"target/release/penview",
+}
+
+for _, path in ipairs(bin_paths) do
+	if #vim.api.nvim_get_runtime_file(path, false) > 0 then
+		bin_exists = true
+		break
+	end
+end
+
+if not bin_exists then
+	print("Building penview binary... (This should only happen once)")
+	require("penview.build").install()
+end
+
+require("penview").setup({
+	browser = vim.env.BROWSER or "brave",
 })
 
+map("n", "<leader>po", "<cmd>PenviewStart<CR>", { desc = "[P]review [O]pen" })
+map("n", "<leader>pc", "<cmd>PenviewStop<CR>", { desc = "[P]review [C]lose" })
 --------------------------------------------------
 --- LSP Setup
 --------------------------------------------------

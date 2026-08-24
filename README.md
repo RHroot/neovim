@@ -6,7 +6,7 @@
 ![Neovim](https://img.shields.io/badge/Neovim-57A143?style=flat-square&logo=neovim&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
----
+______________________________________________________________________
 
 ## ✨ Highlights
 
@@ -28,7 +28,7 @@
 
 🏃 **Built-in Runners** — Execute code directly from the editor (Python, Rust, Go, JS, and more)
 
----
+______________________________________________________________________
 
 ## 📦 Core Dependencies
 
@@ -93,107 +93,107 @@
 
 - **plenary.nvim** — Lua library for common tasks
 
----
+______________________________________________________________________
 
 ## 🎮 Keybindings Cheat Sheet
 
 ### 🎯 General
 
-| Binding      | Action                           |
+| Binding | Action |
 | ------------ | -------------------------------- |
-| `<Space>`    | Leader key                       |
-| `;`          | Remap `:` (faster command entry) |
-| `<C-c>`      | Escape everywhere                |
-| `<leader>ww` | Save file                        |
-| `<leader>qq` | Quit                             |
-| `<leader>ex` | Force quit                       |
-| `<leader>rt` | Restart Neovim                   |
-| `<leader>si` | Source init.lua                  |
+| `<Space>` | Leader key |
+| `;` | Remap `:` (faster command entry) |
+| `<C-c>` | Escape everywhere |
+| `<leader>ww` | Save file |
+| `<leader>qq` | Quit |
+| `<leader>ex` | Force quit |
+| `<leader>rt` | Restart Neovim |
+| `<leader>si` | Source init.lua |
 
 ### 📂 File Navigation
 
-| Binding           | Action                       |
+| Binding | Action |
 | ----------------- | ---------------------------- |
 | `<leader><space>` | Find files (hidden, no .git) |
-| `<leader>/`       | Live grep                    |
-| `<leader>bf`      | Browse buffers               |
-| `<leader>e`       | Explorer (current file dir)  |
-| `<leader>E`       | Explorer (working directory) |
-| `<leader>rl`      | Resume last picker           |
-| `<leader>hp`      | Help tags                    |
+| `<leader>/` | Live grep |
+| `<leader>bf` | Browse buffers |
+| `<leader>e` | Explorer (current file dir) |
+| `<leader>E` | Explorer (working directory) |
+| `<leader>rl` | Resume last picker |
+| `<leader>hp` | Help tags |
 
 ### 🔍 LSP & Navigation
 
-| Binding       | Action                   |
+| Binding | Action |
 | ------------- | ------------------------ |
-| `<leader>gd`  | Go to definition         |
-| `<leader>gr`  | Find references          |
-| `<leader>gi`  | Go to implementation     |
-| `K`           | Hover documentation      |
-| `<C-s>`       | Signature help           |
-| `<leader>ca`  | Code action              |
-| `<leader>sn`  | Rename symbol            |
-| `<leader>sw`  | Search workspace symbols |
-| `<leader>aw`  | Add workspace folder     |
-| `<leader>for` | Format buffer            |
+| `<leader>gd` | Go to definition |
+| `<leader>gr` | Find references |
+| `<leader>gi` | Go to implementation |
+| `K` | Hover documentation |
+| `<C-s>` | Signature help |
+| `<leader>ca` | Code action |
+| `<leader>sn` | Rename symbol |
+| `<leader>sw` | Search workspace symbols |
+| `<leader>aw` | Add workspace folder |
+| `<leader>for` | Format buffer |
 
 ### ✏️ Editing
 
-| Binding                  | Action                         |
+| Binding | Action |
 | ------------------------ | ------------------------------ |
-| `<leader>fm`             | Format buffer                  |
-| `<leader>f`              | Format selection (visual mode) |
-| `<leader>tw`             | Trim trailing whitespace       |
-| `<leader>url`            | Open URL under cursor          |
-| `<C-_>` (or `<leader>_`) | Toggle comment                 |
-| `K` / `J` (visual)       | Move selection up/down         |
-| `<C-d>` / `<C-u>`        | Scroll centered                |
+| `<leader>fm` | Format buffer |
+| `<leader>f` | Format selection (visual mode) |
+| `<leader>tw` | Trim trailing whitespace |
+| `<leader>url` | Open URL under cursor |
+| `<C-_>` (or `<leader>_`) | Toggle comment |
+| `K` / `J` (visual) | Move selection up/down |
+| `<C-d>` / `<C-u>` | Scroll centered |
 
 ### 🧠 Copilot
 
-| Binding      | Action              |
+| Binding | Action |
 | ------------ | ------------------- |
-| `<A-p>`      | Accept suggestion   |
-| `<A-]>`      | Next suggestion     |
-| `<A-[>`      | Previous suggestion |
-| `<A-x>`      | Dismiss suggestion  |
+| `<A-p>` | Accept suggestion |
+| `<A-]>` | Next suggestion |
+| `<A-[>` | Previous suggestion |
+| `<A-x>` | Dismiss suggestion |
 | `<leader>cc` | Toggle Copilot Chat |
 
 ### 💾 Git Integration
 
-| Binding      | Action                 |
+| Binding | Action |
 | ------------ | ---------------------- |
-| `<leader>gs` | Git status             |
-| `<leader>gc` | Git commit             |
-| `<leader>gL` | Git log                |
-| `<leader>gh` | Git range history      |
-| `]h` / `[h`  | Next/previous git hunk |
-| `]H` / `[H`  | Last/first git hunk    |
-| `<leader>go` | Toggle diff overlay    |
+| `<leader>gs` | Git status |
+| `<leader>gc` | Git commit |
+| `<leader>gL` | Git log |
+| `<leader>gh` | Git range history |
+| `]h` / `[h` | Next/previous git hunk |
+| `]H` / `[H` | Last/first git hunk |
+| `<leader>go` | Toggle diff overlay |
 
 ### 🎵 Windows & Splits
 
-| Binding       | Action           |
+| Binding | Action |
 | ------------- | ---------------- |
-| `<C-h/j/k/l>` | Navigate splits  |
-| `<leader>sv`  | Vertical split   |
-| `<leader>sh`  | Horizontal split |
-| `<leader>qn`  | Next buffer      |
-| `<leader>qp`  | Previous buffer  |
-| `<leader>qd`  | Delete buffer    |
+| `<C-h/j/k/l>` | Navigate splits |
+| `<leader>sv` | Vertical split |
+| `<leader>sh` | Horizontal split |
+| `<leader>qn` | Next buffer |
+| `<leader>qp` | Previous buffer |
+| `<leader>qd` | Delete buffer |
 
 ### 💾 Sessions & Misc
 
-| Binding      | Action                |
+| Binding | Action |
 | ------------ | --------------------- |
-| `<leader>ss` | Select session        |
-| `<leader>ws` | Write/save session    |
-| `<leader>mm` | Toggle minimap        |
+| `<leader>ss` | Select session |
+| `<leader>ws` | Write/save session |
+| `<leader>mm` | Toggle minimap |
 | `<leader>nd` | Dismiss notifications |
-| `<leader>nh` | Notification history  |
-| `<leader>rn` | Run current file      |
+| `<leader>nh` | Notification history |
+| `<leader>rn` | Run current file |
 
----
+______________________________________________________________________
 
 ## 🚀 Quick Start
 
@@ -208,9 +208,9 @@ cd ~/.config/nvim
 ### First Launch
 
 1. Open Neovim: `nvim`
-2. The config will auto-install plugins via vim.pack
-3. Mason will auto-install language servers on first LSP attach
-4. You're ready to code! 🎉
+1. The config will auto-install plugins via vim.pack
+1. Mason will auto-install language servers on first LSP attach
+1. You're ready to code! 🎉
 
 ### Plugin Management
 
@@ -222,7 +222,7 @@ vim.pack.add({
 })
 ```
 
----
+______________________________________________________________________
 
 ## 🌍 Supported Languages
 
@@ -246,7 +246,7 @@ SQL • JSON • YAML • TOML • CSV • PostgreSQL
 
 Markdown • LaTeX • Dockerfile • Git Commits
 
----
+______________________________________________________________________
 
 ## ⚙️ Customization
 
@@ -298,30 +298,30 @@ formatters_by_ft = {
 }
 ```
 
----
+______________________________________________________________________
 
 ## 🎨 File Runners
 
 Execute code directly from Neovim with `<leader>rn`:
 
-| Language   | Command                        |
+| Language | Command |
 | ---------- | ------------------------------ |
-| Python     | `python %`                     |
-| Lua        | `lua %`                        |
-| Bash       | `bash %`                       |
-| JavaScript | `node %`                       |
-| TypeScript | `ts-node %`                    |
-| Go         | `go run %`                     |
-| Rust       | `rustc % && ./target/...`      |
-| C          | `gcc % -o %< && ./%<`          |
-| C++        | `g++ % -std=c++17 -O2 && ./%<` |
-| Java       | `javac % && java %<`           |
-| Ruby       | `ruby %`                       |
-| PHP        | `php %`                        |
-| Perl       | `perl %`                       |
-| Zig        | `zig run %`                    |
+| Python | `python %` |
+| Lua | `lua %` |
+| Bash | `bash %` |
+| JavaScript | `node %` |
+| TypeScript | `ts-node %` |
+| Go | `go run %` |
+| Rust | `rustc % && ./target/...` |
+| C | `gcc % -o %< && ./%<` |
+| C++ | `g++ % -std=c++17 -O2 && ./%<` |
+| Java | `javac % && java %<` |
+| Ruby | `ruby %` |
+| PHP | `php %` |
+| Perl | `perl %` |
+| Zig | `zig run %` |
 
----
+______________________________________________________________________
 
 ## 🔧 Advanced Features
 
@@ -344,7 +344,7 @@ This config leverages Mini.nvim for a lightweight yet powerful experience:
 ### Git Integration
 
 - Full git status and log viewing
-- Hunk navigation with ]h/[h
+- Hunk navigation with \]h/\[h
 - Diff overlay for visual comparison
 - Range history for code sections
 
@@ -366,7 +366,7 @@ Blink.cmp provides:
 - Documentation on hover
 - Intelligent sorting
 
----
+______________________________________________________________________
 
 ## 📊 Status Line Features
 
@@ -380,7 +380,7 @@ The custom status line displays:
 - 📍 **Position** — Line and column number
 - 🤖 **LSP Status** — Active language servers
 
----
+______________________________________________________________________
 
 ## 🎯 Performance Optimizations
 
@@ -389,7 +389,7 @@ The custom status line displays:
 - **Efficient Search** — Ripgrep integration for fast grepping
 - **Minimal Config** — No unnecessary bloat or startup slowness
 
----
+______________________________________________________________________
 
 ## 🐛 Troubleshooting
 
@@ -419,17 +419,17 @@ nvim  # Will regenerate
 - Check startup time: `nvim --startuptime startup.log`
 - Profile with: `:Profiling` (if available)
 
----
+______________________________________________________________________
 
 ## 🚀 Advanced Tips
 
 1. **Quick Session Save** — `:write` + `<leader>ws` to save layout
-2. **Range Formatting** — Visual select + `<leader>f` to format
-3. **Workspace Symbols** — `<leader>sw` to search across project
-4. **Code Actions** — `<leader>ca` to access LSP quick fixes
-5. **Git History** — `<leader>gh` to see changes by line
+1. **Range Formatting** — Visual select + `<leader>f` to format
+1. **Workspace Symbols** — `<leader>sw` to search across project
+1. **Code Actions** — `<leader>ca` to access LSP quick fixes
+1. **Git History** — `<leader>gh` to see changes by line
 
----
+______________________________________________________________________
 
 ## 📝 File Structure
 
@@ -441,7 +441,7 @@ nvim  # Will regenerate
 └── README.md            # This file
 ```
 
----
+______________________________________________________________________
 
 ## 🤝 Contributing
 
@@ -454,13 +454,13 @@ Feel free to fork, modify, and enhance this configuration for your workflow!
 - **Components**: Mini.nvim ecosystem
 - **Author**: RHroot
 
----
+______________________________________________________________________
 
 ## 📄 License
 
 MIT License — Use freely in your projects!
 
----
+______________________________________________________________________
 
 ## 🎉 Final Notes
 
@@ -474,7 +474,7 @@ This configuration is designed for **serious developers** who want:
 
 **Happy coding!** 🚀✨
 
----
+______________________________________________________________________
 
 [GitHub](https://github.com/RHroot/neovim) • [Codeberg](https://codeberg.org/RHroot/neovim)
 
