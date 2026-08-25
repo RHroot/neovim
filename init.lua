@@ -161,7 +161,7 @@ vim.opt.clipboard = "unnamedplus"
 vim.opt.splitbelow = true
 vim.opt.timeout = true
 vim.opt.timeoutlen = 500
-vim.opt.updatetime = 250
+vim.opt.updatetime = 1000
 
 --- Folding
 vim.opt.foldmethod = "indent"
@@ -246,10 +246,6 @@ vim.pack.add({
 	--- Undo Tree
 	{ src = "https://github.com/mbbill/undotree" },
 
-	--- Plugins for LSP
-	{ src = "https://github.com/mason-org/mason.nvim" },
-	{ src = "https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim" },
-
 	--- Plugins for Completion
 	{ src = "https://github.com/saghen/blink.cmp" },
 	{ src = "https://github.com/saghen/blink.lib" },
@@ -327,41 +323,16 @@ map("n", "<leader>pc", "<cmd>PenviewStop<CR>", { desc = "[P]review [C]lose" })
 --------------------------------------------------
 --- LSP Setup
 --------------------------------------------------
-require("mason").setup()
-require("mason-tool-installer").setup({
-	ensure_installed = {
-		--- LSP's installed through mason
-		-- "clangd", -- TODO: clangd is not working properly like this on nixos but it will work good on traditional linux
-		"marksman",
-		"rust-analyzer",
-		"python-lsp-server",
-		"lua-language-server",
-
-		--- Formatters installed through mason
-		"ruff",
-		"shfmt",
-		"stylua",
-		"sqruff",
-		"mdformat",
-		"superhtml",
-		"clang-format",
-	},
-})
-
---- Define all server configurations manually
 local servers = {
 	pylsp = {
 		cmd = { "pylsp" },
 		filetypes = { "python" },
 		root_markers = { "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
 	},
-	marksman = {
-		cmd = { "marksman", "server" },
-		filetypes = { "markdown", "markdown.mdx" },
-		root_markers = { ".marksman.toml", ".git" },
-		cmd_env = {
-			DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1",
-		},
+	sqls = {
+		cmd = { "sqls" },
+		filetypes = { "sql" },
+		root_markers = { ".git" },
 	},
 	rust_analyzer = {
 		cmd = { "rust-analyzer" },
@@ -372,6 +343,14 @@ local servers = {
 		cmd = { "bash-language-server", "start" },
 		filetypes = { "sh", "bash" },
 		root_markers = { ".git", ".shellcheckrc" },
+	},
+	marksman = {
+		cmd = { "marksman", "server" },
+		filetypes = { "markdown", "markdown.mdx" },
+		root_markers = { ".marksman.toml", ".git" },
+		cmd_env = {
+			DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1",
+		},
 	},
 	lua_ls = {
 		cmd = { "lua-language-server" },
@@ -386,13 +365,21 @@ local servers = {
 					globals = { "vim" },
 				},
 				workspace = {
-					library = vim.tbl_deep_extend(
-						"force",
-						--- This is a hack to make sure that the runtime is found for neovim
-						vim.api.nvim_get_runtime_file("", true),
-						--- This is a hack to make sure that the stubs are found for hyprland
-						{ "/run/current-system/sw/share/hypr/stubs" }
-					),
+					library = (function()
+						local paths = vim.api.nvim_get_runtime_file("", true)
+						local hypr_paths = {
+							"/run/current-system/sw/share/hypr/stubs",
+							"/usr/share/hypr/stubs",
+							"/usr/local/share/hypr/stubs",
+							vim.fn.expand("~/.local/share/hypr/stubs"),
+						}
+						for _, p in ipairs(hypr_paths) do
+							if vim.fn.isdirectory(p) == 1 then
+								table.insert(paths, p)
+							end
+						end
+						return paths
+					end)(),
 					checkThirdParty = false,
 				},
 			},
@@ -404,8 +391,7 @@ local servers = {
 			"--clang-tidy",
 			"--background-index",
 			"--header-insertion=never",
-			"--query-driver=/run/current-system/sw/bin/gcc,/run/current-system/sw/bin/clang", -- NOTE: This is for NixOS
-			-- "--query-driver=/usr/bin/gcc,/usr/bin/clang", -- NOTE: This is for Standard Linux
+			"--query-driver=/run/current-system/sw/bin/gcc,/run/current-system/sw/bin/clang,/usr/bin/gcc,/usr/bin/clang",
 			"--compile-commands-dir=.",
 		},
 		filetypes = { "c", "cpp", "objc", "objcpp", "cuda", "proto" },
@@ -416,9 +402,9 @@ local servers = {
 			},
 		},
 		env = {
-			CPATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include",
-			C_INCLUDE_PATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include",
-			CPLUS_INCLUDE_PATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include",
+			CPATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include:/usr/include:/usr/local/include",
+			C_INCLUDE_PATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include:/usr/include:/usr/local/include",
+			CPLUS_INCLUDE_PATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include:/usr/include:/usr/local/include",
 		},
 	},
 }
@@ -546,6 +532,17 @@ local conform = require("conform")
 
 conform.setup({
 	formatters_by_ft = {
+		--- Data / query
+		sql = { "sql_formatter" },
+
+		--- Markdown
+		markdown = { "mdformat" },
+
+		--- Infra / scripts
+		sh = { "shfmt" },
+		bash = { "shfmt" },
+		nix = { "nixfmt" },
+
 		--- Core languages
 		lua = { "stylua" },
 		rust = { "rustfmt" },
@@ -556,6 +553,7 @@ conform.setup({
 		--- Web / frontend
 		css = { "prettierd" },
 		vue = { "prettierd" },
+		html = { "prettierd" },
 		scss = { "prettierd" },
 		less = { "prettierd" },
 		json = { "prettierd" },
@@ -565,33 +563,15 @@ conform.setup({
 		svelte = { "prettierd" },
 		javascript = { "prettierd" },
 		typescript = { "prettierd" },
+		dockerfile = { "prettierd" },
 		javascriptreact = { "prettierd" },
 		typescriptreact = { "prettierd" },
-
-		--- Independent Ones
-		html = { "superhtml" },
-		markdown = { "mdformat" },
-
-		--- Infra / scripts
-		sh = { "shfmt" },
-		bash = { "shfmt" },
-		nix = { "nixfmt" },
-		dockerfile = { "shfmt" },
-		hyprlang = { "shfmt" },
-
-		--- Data / query
-		sql = { "sqruff" },
 	},
 
 	formatters = {
 		shfmt = {
 			command = "shfmt",
 			args = { "-i", "2", "-bn", "-ci", "-ln", "bash" },
-			stdin = true,
-		},
-		sqruff = {
-			command = "sqruff",
-			args = { "format", "-" },
 			stdin = true,
 		},
 	},
@@ -827,17 +807,6 @@ miniclue.setup({
 --------------------------------------------------
 local pick = require("mini.pick")
 
--- Auto-generates a config file to force ripgrep to show hidden files (ignoring .git).
-local rg_conf = vim.fn.stdpath("data") .. "/ripgrep.conf"
-if vim.fn.filereadable(rg_conf) == 0 then
-	local f = io.open(rg_conf, "w")
-	if f then
-		f:write("--no-ignore\n--hidden\n--glob=!.git/*\n")
-		f:close()
-	end
-end
-vim.env.RIPGREP_CONFIG_PATH = rg_conf
-
 pick.setup({
 	window = {
 		config = function()
@@ -852,16 +821,18 @@ pick.setup({
 				border = "solid",
 			}
 		end,
-		prompt_prefix = " 󰍉 => ",
+		prompt_prefix = "󰍉=> ",
 	},
 	mappings = {
-		toggle_preview = "<M-L>",
-		toggle_info = "<M-H>",
-		move_down = "<C-j>",
 		move_up = "<C-k>",
+		move_down = "<C-j>",
+		move_up = "<S-Tab>",
+		move_down = "<Tab>",
+		toggle_info = "<M-H>",
+		toggle_preview = "<M-L>",
 	},
 	options = {
-		use_cache = true,
+		use_cache = false,
 	},
 })
 
@@ -869,20 +840,81 @@ vim.ui.select = pick.ui_select
 
 local has_rg = vim.fn.executable("rg") == 1
 
+local function pick_cli_with_icons(command)
+	pick.builtin.cli({
+		command = command,
+		postprocess = function(lines)
+			local items = {}
+			for _, line in ipairs(lines) do
+				if line ~= "" then
+					table.insert(items, { path = line, text = line })
+				end
+			end
+			return items
+		end,
+	}, {
+		source = {
+			show = function(buf_id, items, query)
+				pick.default_show(buf_id, items, query, { show_icons = true })
+			end,
+		},
+	})
+end
+
 map("n", "<leader><space>", function()
 	if has_rg then
-		pick.builtin.files({ command = { "rg" } })
+		pick_cli_with_icons({
+			"sh",
+			"-c",
+			"rg --files --no-ignore --hidden --glob=!.git/* --glob=!.cache/* --glob=!.local/* --glob=!node_modules/*",
+		})
 	else
-		pick.builtin.files({ command = { "find", ".", "-type", "f", "-not", "-path", "*/.git/*" } })
+		pick_cli_with_icons({
+			"sh",
+			"-c",
+			"find -L . -type f -not -path '*/.git/*' -not -path '*/.cache/*' -not -path '*/.local/*' -not -path '*/node_modules/*'",
+		})
 	end
-end, { desc = "Find Files (Hidden)" })
-map("n", "<leader>/", function()
+end, { desc = "Find Files" })
+
+local function static_grep_with_icons()
+	local cmd_str
 	if has_rg then
-		pick.builtin.grep_live({ tool = "rg" })
+		cmd_str =
+			'rg --line-number --no-heading --color=never --hidden --no-messages --glob=!.git/* --glob=!.cache/* --glob=!.local/* --glob=!node_modules/* --no-ignore "" . 2>/dev/null || true'
 	else
-		pick.builtin.grep_live()
+		cmd_str =
+			'grep -Rna --exclude-dir=.git --exclude-dir=.cache --exclude-dir=.local --exclude-dir=node_modules "" . 2>/dev/null || true'
 	end
-end, { desc = "Live Grep" })
+
+	pick.builtin.cli({
+		command = { "sh", "-c", cmd_str },
+		postprocess = function(lines)
+			local items = {}
+			for _, line in ipairs(lines) do
+				if line ~= "" then
+					local file, lnum, text = line:match("^(.-):(%d+):(.*)$")
+					if file and lnum then
+						file = file:gsub("^%./", "")
+						table.insert(items, {
+							path = file,
+							lnum = tonumber(lnum),
+							text = line,
+						})
+					end
+				end
+			end
+			return items
+		end,
+	}, {
+		source = {
+			show = function(buf_id, items, query)
+				pick.default_show(buf_id, items, query, { show_icons = true })
+			end,
+		},
+	})
+end
+map("n", "<leader>/", static_grep_with_icons, { desc = "Static Grep" })
 
 map("n", "<leader>bf", "<cmd>Pick buffers<CR>", { desc = "Buffers" })
 map("n", "<leader>hp", "<cmd>Pick help<CR>", { desc = "Help Tags" })
@@ -1110,9 +1142,6 @@ require("supermaven-nvim").setup({
 	log_level = "info",
 	disable_inline_completion = false,
 	disable_keymaps = false,
-	condition = function()
-		return false
-	end,
 })
 
 --------------------------------------------------
