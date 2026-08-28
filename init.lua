@@ -203,7 +203,6 @@ map("t", "<Esc>", "<C-\\><C-n>", { noremap = true, silent = true })
 map("t", "<C-c>", "<C-c>", { noremap = true, silent = true })
 map("n", "<leader>tt", ":terminal<CR>", { noremap = true, silent = true })
 map("n", "<leader>so", ":update<CR> :source<CR>", { noremap = true, silent = false })
-map("n", "<leader>si", "<cmd>source ~/.config/nvim/init.lua<CR>", { noremap = true, silent = false })
 map({ "v", "x" }, "<C-_>", "gc", { noremap = true, desc = "Toggle comment" })
 map("n", "<C-_>", "gcc", { noremap = true, silent = true, desc = "Toggle comment" })
 
