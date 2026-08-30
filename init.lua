@@ -1,5 +1,5 @@
 ----------------------------------------------------------
---- AutoCmds Starts Here
+--- Auto Commands
 ----------------------------------------------------------
 --- Yank highlight
 vim.api.nvim_create_autocmd("TextYankPost", {
@@ -21,6 +21,22 @@ vim.api.nvim_create_autocmd("ModeChanged", {
 	end,
 })
 
+--- Restore Cursor Position on Reopen
+vim.api.nvim_create_autocmd("BufReadPost", {
+	callback = function(args)
+		if vim.bo[args.buf].filetype == "gitcommit" then
+			return
+		end
+
+		local mark = vim.api.nvim_buf_get_mark(args.buf, '"')
+		local line_count = vim.api.nvim_buf_line_count(args.buf)
+
+		if mark[1] > 0 and mark[1] <= line_count then
+			pcall(vim.api.nvim_win_set_cursor, 0, mark)
+		end
+	end,
+})
+
 --- LSP keymaps
 local lsp_group = vim.api.nvim_create_augroup("lsp-attach", { clear = true })
 
@@ -33,20 +49,24 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		end
 
 		--- Navigation
-		map("n", "<leader>gd", vim.lsp.buf.definition, "Go to definition")
-		map("n", "<leader>gr", vim.lsp.buf.references, "Find references")
-		map("n", "<leader>gi", vim.lsp.buf.implementation, "Go to implementation")
-		map("n", "<leader>gD", vim.lsp.buf.declaration, "Go to declaration")
 		map("n", "K", vim.lsp.buf.hover, "Hover documentation")
 		map("n", "<C-s>", vim.lsp.buf.signature_help, "Signature help")
+		map("n", "<leader>gr", vim.lsp.buf.references, "Find references")
+		map("n", "<leader>gd", vim.lsp.buf.definition, "Go to definition")
+		map("n", "<leader>gD", vim.lsp.buf.declaration, "Go to declaration")
+		map("n", "<leader>gi", vim.lsp.buf.implementation, "Go to implementation")
 
 		--- Diagnostics
+		map("n", "<leader>d", function()
+			vim.diagnostic.setqflist()
+			vim.cmd("copen")
+		end, "Show Diagnostics")
 		map("n", "<leader>]d", function()
 			vim.diagnostic.jump({ count = 1 })
-		end, "Next diagnostic")
+		end, "Next Diagnostic")
 		map("n", "<leader>[d", function()
 			vim.diagnostic.jump({ count = -1 })
-		end, "Previous diagnostic")
+		end, "Previous Diagnostic")
 
 		--- Workspace
 		map("n", "<leader>aw", vim.lsp.buf.add_workspace_folder, "Add workspace folder")
@@ -63,6 +83,17 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		end, "Format buffer")
 	end,
 })
+
+--- Completion
+vim.api.nvim_create_autocmd("LspAttach", {
+	callback = function(ev)
+		local client = vim.lsp.get_client_by_id(ev.data.client_id)
+		if client ~= nil and client:supports_method("textDocument/completion") then
+			vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
+		end
+	end,
+})
+vim.cmd("set completeopt+=noselect")
 
 --- Diagnostics config
 vim.diagnostic.config({
@@ -87,7 +118,7 @@ vim.diagnostic.config({
 	},
 })
 
---- CursorHold diagnostics (non-spammy)
+--- CursorHold diagnostics
 vim.api.nvim_create_autocmd("CursorHold", {
 	desc = "Auto-show diagnostics in float",
 	callback = function()
@@ -105,49 +136,55 @@ vim.api.nvim_create_autocmd("CursorHold", {
 })
 
 ----------------------------------------------------------
---- OPTS Starts Here
+--- Options Starts Here
 ----------------------------------------------------------
 --- UI & Appearance
-vim.opt.number = true
-vim.opt.relativenumber = true
 vim.opt.title = true
-vim.opt.termguicolors = true
+vim.opt.cmdheight = 1
+vim.opt.scrolloff = 9
+vim.opt.number = true
+vim.opt.showmode = false
 vim.opt.cursorline = true
 vim.opt.cursorcolumn = true
-vim.opt.showmode = false
-vim.opt.signcolumn = "yes:1"
-vim.opt.winborder = "rounded"
-vim.opt.scrolloff = 9
 vim.opt.virtualedit = "all"
-vim.opt.cmdheight = 1
-vim.g.have_nerd_font = true
+vim.opt.background = "dark"
+vim.opt.signcolumn = "yes:1"
+vim.opt.termguicolors = true
+vim.opt.winborder = "rounded"
+vim.opt.relativenumber = true
+vim.opt.guifont = "FiraCode Nerd Font:h18"
 
 --- Tabs & Indentation
+vim.opt.list = true
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.softtabstop = 4
 vim.opt.expandtab = true
-vim.opt.smartindent = true
 vim.opt.autoindent = true
-vim.opt.list = true
+vim.opt.smartindent = true
 vim.opt.listchars = { tab = "» ", space = "·", trail = "✕" }
 
 --- Line Wrapping
 vim.opt.wrap = true
-vim.opt.linebreak = true
 vim.opt.showbreak = "↪"
 vim.opt.sidescroll = 1
+vim.opt.linebreak = true
 
 --- Search Settings
-vim.opt.ignorecase = true
-vim.opt.smartcase = true
 vim.opt.hlsearch = true
+vim.opt.smartcase = true
 vim.opt.incsearch = true
+vim.opt.ignorecase = true
 
 --- Files & Backup
-vim.opt.swapfile = false
 vim.opt.backup = false
 vim.opt.undofile = true
+vim.opt.swapfile = false
+
+--- Spelling
+vim.wo.spell = true
+vim.opt.spelllang = "en"
+vim.opt_global.spell = true
 
 --- Persistent Undo Directory Logic
 local undodir = vim.fn.stdpath("data") .. "/undo"
@@ -157,29 +194,33 @@ end
 vim.opt.undodir = undodir
 
 --- System & Performance
-vim.opt.clipboard = "unnamedplus"
-vim.opt.splitbelow = true
 vim.opt.timeout = true
 vim.opt.timeoutlen = 500
 vim.opt.updatetime = 1000
+vim.opt.splitbelow = true
+vim.opt.clipboard = "unnamedplus"
 
 --- Folding
-vim.opt.foldmethod = "indent"
-vim.opt.foldenable = false
 vim.opt.foldlevel = 0
+vim.opt.foldenable = false
+vim.opt.foldmethod = "indent"
 
---- Neovide Specifics
-vim.opt.guifont = "FiraCode Nerd Font:h18"
-vim.opt.background = "dark"
-vim.g.neovide_padding_top = 0
-vim.g.neovide_padding_bottom = 0
-vim.g.neovide_padding_right = 0
-vim.g.neovide_padding_left = 0
-vim.g.neovide_opacity = 0.8
+--- Global Options
+vim.g.netrw_banner = 0
+vim.g.netrw_altfile = 1
+vim.g.netrw_winsize = 25
 vim.g.transparency = 0.8
+vim.g.netrw_liststyle = 3
+vim.g.netrw_browser_split = 0
+vim.g.have_nerd_font = true
+vim.g.neovide_opacity = 0.8
+vim.g.neovide_padding_top = 0
+vim.g.neovide_padding_left = 0
+vim.g.neovide_padding_right = 0
+vim.g.neovide_padding_bottom = 0
 
 ----------------------------------------------------------
---- Keymaps Starts Here
+--- Keymaps
 ----------------------------------------------------------
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
@@ -191,10 +232,11 @@ map({ "n", "v", "x" }, ";", ":", { noremap = true, silent = false })
 map({ "n", "i", "v", "c", "t", "x", "s", "o" }, "<C-c>", "<Esc>", { noremap = true, silent = false })
 map("n", "<leader>w", ":w<CR>", { noremap = true, silent = false })
 map("n", "<leader>q", ":q<CR>", { noremap = true, silent = false })
-map("n", "<leader>bn", ":bn<CR>", { noremap = true, silent = true })
-map("n", "<leader>bp", ":bp<CR>", { noremap = true, silent = true })
-map("n", "<leader>bd", ":bd<CR>", { noremap = true, silent = true })
-map("n", "<leader>bc", ":enew<CR>", { noremap = true, silent = true })
+map("n", "<leader>bn", ":bn<CR>", { noremap = true, silent = false })
+map("n", "<leader>bp", ":bp<CR>", { noremap = true, silent = false })
+map("n", "<leader>bd", ":bd<CR>", { noremap = true, silent = false })
+map("n", "<leader>bc", ":enew<CR>", { noremap = true, silent = false })
+map("n", "<leader>e", ":Lexplore<CR>", { noremap = true, silent = false })
 map("n", "<F5>", ":edit<CR>", { noremap = true, silent = false })
 map("n", "<leader>rt", ":restart<CR>", { noremap = true, silent = false })
 map("n", "<Esc>", "<cmd>nohlsearch<CR>", { noremap = true, silent = true })
@@ -205,6 +247,10 @@ map("n", "<leader>tt", ":terminal<CR>", { noremap = true, silent = true })
 map("n", "<leader>so", ":update<CR> :source<CR>", { noremap = true, silent = false })
 map({ "v", "x" }, "<C-_>", "gc", { noremap = true, desc = "Toggle comment" })
 map("n", "<C-_>", "gcc", { noremap = true, silent = true, desc = "Toggle comment" })
+vim.keymap.set("n", "<leader>sp", function()
+	vim.wo.spell = not vim.wo.spell
+	vim.notify("Spell " .. (vim.wo.spell and "on" or "off"), vim.log.levels.INFO)
+end, { silent = true, desc = "Toggle spellcheck" })
 
 --- better movement in wrapped text
 map("n", "j", function()
@@ -214,13 +260,33 @@ map("n", "k", function()
 	return vim.v.count == 0 and "gk" or "k"
 end, { expr = true, silent = true, desc = "Up (warp-aware)" })
 
---- To Travel between splits or panes you may call it
-map("n", "<C-S-j>", "<C-w>j", { noremap = true, silent = true })
-map("n", "<C-S-k>", "<C-w>k", { noremap = true, silent = true })
-map("n", "<C-S-l>", "<C-w>l", { noremap = true, silent = true })
-map("n", "<C-S-h>", "<C-w>h", { noremap = true, silent = true })
+--- Splits
 map("n", "<leader>sv", ":vsplit<CR>", { noremap = true, silent = true })
 map("n", "<leader>sh", ":split<CR>", { noremap = true, silent = true })
+
+--- To move around neovim panes and tmux panes
+local function tmux_nav(dir)
+	local tmux_dir = ({ h = "-L", j = "-D", k = "-U", l = "-R" })[dir]
+
+	if vim.fn.exists("$TMUX") == 1 and vim.fn.winnr() == vim.fn.winnr(dir) then
+		vim.fn.system("tmux select-pane " .. tmux_dir)
+	else
+		vim.cmd("wincmd " .. dir)
+	end
+end
+
+vim.keymap.set("n", "<C-h>", function()
+	tmux_nav("h")
+end, { silent = true, desc = "Move to left split/tmux pane" })
+vim.keymap.set("n", "<C-j>", function()
+	tmux_nav("j")
+end, { silent = true, desc = "Move to lower split/tmux pane" })
+vim.keymap.set("n", "<C-k>", function()
+	tmux_nav("k")
+end, { silent = true, desc = "Move to upper split/tmux pane" })
+vim.keymap.set("n", "<C-l>", function()
+	tmux_nav("l")
+end, { silent = true, desc = "Move to right split/tmux pane" })
 
 --- Prime's remaps
 map("n", "J", "mzJ`z", { noremap = true, silent = true })
@@ -232,124 +298,44 @@ map("n", "<leader>Y", [["+Y]], { noremap = true, silent = true })
 map("x", "<leader>p", [["_dP]], { noremap = true, silent = true })
 map("v", "K", ":m '<-2<CR>gv=gv", { noremap = true, silent = true })
 map("v", "J", ":m '>+1<CR>gv=gv", { noremap = true, silent = true })
-map({ "n", "v" }, "<leader>d", '"_d', { noremap = true, silent = true })
-map({ "n", "v" }, "<leader>y", [["+y]], { noremap = true, silent = true })
 
 ----------------------------------------------------------
---- Plugins Will Added Here
+--- Colorscheme
 ----------------------------------------------------------
-vim.pack.add({
-	--- Plugins for Colorscheme
-	{ src = "https://github.com/folke/tokyonight.nvim" },
-
-	--- Undo Tree
-	{ src = "https://github.com/mbbill/undotree" },
-
-	--- Plugins for Completion
-	{ src = "https://github.com/saghen/blink.cmp" },
-	{ src = "https://github.com/saghen/blink.lib" },
-
-	--- Plugins for Formatting
-	{ src = "https://github.com/stevearc/conform.nvim" },
-
-	--- Plugins that can be quite useful if you know how to use them from Mini.nvim
-	{ src = "https://github.com/nvim-mini/mini.nvim" },
-
-	--- Plugins for AI Completion
-	{ src = "https://github.com/supermaven-inc/supermaven-nvim" },
-
-	--- Plugins for Markdown Preview
-	{ src = "https://github.com/vihu/penview.nvim" },
-})
-
---------------------------------------------------
---- Undo Tree
---------------------------------------------------
-vim.keymap.set("n", "<leader>u", vim.cmd.UndotreeToggle)
-
---------------------------------------------------
---- Colors
---------------------------------------------------
-local has_tokyonight, tokyonight = pcall(require, "tokyonight")
-
-if has_tokyonight then
-	tokyonight.setup({
-		style = "night",
-		light_style = "night",
-		styles = {
-			comments = { italic = true },
-			keywords = { italic = true },
-			functions = { bold = true },
-			variables = { bold = true },
-			sidebars = "transparent",
-			floats = "transparent",
-		},
-	})
-
-	vim.cmd.colorscheme("tokyonight")
-else
-	pcall(vim.cmd.colorscheme, "unokai")
+-- if pcall(vim.cmd.colorscheme, "unokai") then
+if pcall(vim.cmd.colorscheme, "catppuccin") then
+	vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
 end
 
---------------------------------------------------
---- Markdown Rendering
---------------------------------------------------
-local bin_exists = false
-local bin_paths = {
-	"bin/penview",
-	"penview",
-	"target/release/penview",
-}
-
-for _, path in ipairs(bin_paths) do
-	if #vim.api.nvim_get_runtime_file(path, false) > 0 then
-		bin_exists = true
-		break
-	end
-end
-
-if not bin_exists then
-	print("Building penview binary... (This should only happen once)")
-	require("penview.build").install()
-end
-
-require("penview").setup({
-	browser = vim.env.BROWSER or "brave",
-})
-
-map("n", "<leader>po", "<cmd>PenviewStart<CR>", { desc = "[P]review [O]pen" })
-map("n", "<leader>pc", "<cmd>PenviewStop<CR>", { desc = "[P]review [C]lose" })
---------------------------------------------------
---- LSP Setup
---------------------------------------------------
+----------------------------------------------------------
+--- LSP
+----------------------------------------------------------
 local servers = {
-	pylsp = {
-		cmd = { "pylsp" },
-		filetypes = { "python" },
-		root_markers = { "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
-	},
 	sqls = {
 		cmd = { "sqls" },
 		filetypes = { "sql" },
 		root_markers = { ".git" },
-	},
-	rust_analyzer = {
-		cmd = { "rust-analyzer" },
-		filetypes = { "rust" },
-		root_markers = { "Cargo.toml", "rust-project.json", ".git" },
 	},
 	bashls = {
 		cmd = { "bash-language-server", "start" },
 		filetypes = { "sh", "bash" },
 		root_markers = { ".git", ".shellcheckrc" },
 	},
+	rust_analyzer = {
+		cmd = { "rust-analyzer" },
+		filetypes = { "rust" },
+		root_markers = { "Cargo.toml", "rust-project.json", ".git" },
+	},
+	pylsp = {
+		cmd = { "pylsp" },
+		filetypes = { "python" },
+		root_markers = { "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
+	},
 	marksman = {
 		cmd = { "marksman", "server" },
 		filetypes = { "markdown", "markdown.mdx" },
 		root_markers = { ".marksman.toml", ".git" },
-		cmd_env = {
-			DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1",
-		},
+		cmd_env = { DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1" },
 	},
 	lua_ls = {
 		cmd = { "lua-language-server" },
@@ -357,15 +343,12 @@ local servers = {
 		root_markers = { ".luarc.json", ".git" },
 		settings = {
 			Lua = {
-				runtime = {
-					version = "LuaJIT",
-				},
-				diagnostics = {
-					globals = { "vim" },
-				},
+				runtime = { version = "LuaJIT" },
+				diagnostics = { globals = { "vim" } },
 				workspace = {
 					library = (function()
-						local paths = vim.api.nvim_get_runtime_file("", true)
+						-- Improved: only index 'lua' directories to prevent massive performance hits
+						local paths = vim.api.nvim_get_runtime_file("lua", true)
 						local hypr_paths = {
 							"/run/current-system/sw/share/hypr/stubs",
 							"/usr/share/hypr/stubs",
@@ -395,662 +378,454 @@ local servers = {
 		},
 		filetypes = { "c", "cpp", "objc", "objcpp", "cuda", "proto" },
 		root_markers = { ".clangd", ".clang-tidy", ".clang-format", "compile_commands.json", ".git" },
-		init_options = {
-			clangd = {
-				headerInsertion = "never",
-			},
-		},
+		init_options = { clangd = { headerInsertion = "never" } },
 		env = {
-			CPATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include:/usr/include:/usr/local/include",
-			C_INCLUDE_PATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include:/usr/include:/usr/local/include",
-			CPLUS_INCLUDE_PATH = "/run/current-system/sw/include:/nix/store/*-glibc-*/include:/usr/include:/usr/local/include",
+			CPATH = "/run/current-system/sw/include:/usr/include:/usr/local/include",
+			C_INCLUDE_PATH = "/run/current-system/sw/include:/usr/include:/usr/local/include",
+			CPLUS_INCLUDE_PATH = "/run/current-system/sw/include:/usr/include:/usr/local/include",
 		},
 	},
 }
 
---- Setup base blink
-local has_blink, blink = pcall(require, "blink.cmp")
---
--- --- Apply configurations
+-- Native capabilities with snippet support enabled
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+--- Apply configurations
 for server_name, config in pairs(servers) do
-	local capabilities = vim.lsp.protocol.make_client_capabilities()
-	config.capabilities = blink.get_lsp_capabilities(capabilities)
+	config.capabilities = capabilities
 	vim.lsp.config(server_name, config)
 end
 
 --- Enable all servers
 vim.lsp.enable(vim.tbl_keys(servers))
 
---------------------------------------------------
---- Snippets
---------------------------------------------------
-require("mini.snippets").setup({
-	snippets = {
-		function()
-			return {
-				{
-					prefix = "req",
-					body = "local ${1:mod} = require('${1:mod}')",
-					desc = "Require module",
-					filetype = "lua",
-				},
-				{
-					prefix = "pp",
-					body = "print(${1})",
-					filetype = "python",
-				},
-				{
-					prefix = "main",
-					body = {
-						"if __name__ == '__main__':",
-						"    ${1:main()}",
-					},
-					filetype = "python",
-				},
-				{
-					prefix = "cl",
-					body = "console.log(${1})",
-					filetype = { "javascript", "typescript" },
-				},
-			}
-		end,
-	},
-})
-
---------------------------------------------------
---- Completion
---------------------------------------------------
-if has_blink then
-	blink.build():wait(60000)
-	blink.setup({
-
-		sources = {
-			default = { "snippets", "lsp", "path", "buffer", "cmdline" },
-		},
-
-		snippets = { preset = "mini_snippets" },
-
-		fuzzy = { implementation = "prefer_rust_with_warning" },
-
-		keymap = {
-			preset = "none",
-			["<CR>"] = { "accept", "fallback" },
-			["<Esc>"] = { "hide", "fallback" },
-			["<C-e>"] = { "show_documentation", "hide_documentation" },
-			["<C-u>"] = { "scroll_documentation_up", "fallback" },
-			["<C-d>"] = { "scroll_documentation_down", "fallback" },
-			["<C-n>"] = { "select_next", "fallback" },
-			["<C-p>"] = { "select_prev", "fallback" },
-			["<Tab>"] = { "select_next", "fallback" },
-			["<S-Tab>"] = { "select_prev", "fallback" },
-		},
-
-		signature = {
-			enabled = true,
-			window = {
-				max_height = 8,
-				max_width = 60,
-				border = "rounded",
-			},
-		},
-
-		appearance = {
-			use_nvim_cmp_as_default = true,
-			nerd_font_variant = "mono",
-		},
-
-		completion = {
-			trigger = {
-				show_on_keyword = true,
-				show_on_trigger_character = true,
-			},
-			menu = {
-				auto_show = true,
-				auto_show_delay_ms = 100,
-			},
-			list = {
-				selection = {
-					preselect = true,
-					auto_insert = false,
-				},
-			},
-			documentation = {
-				auto_show = true,
-				auto_show_delay_ms = 100,
-			},
-			keyword = { range = "full" },
-			ghost_text = { enabled = true },
-		},
-	})
-end
-
---------------------------------------------------
---- Formatter
---------------------------------------------------
-local conform = require("conform")
-
-conform.setup({
-	formatters_by_ft = {
-		--- Data / query
-		sql = { "sql_formatter" },
-
-		--- Markdown
-		markdown = { "mdformat" },
-
-		--- Infra / scripts
-		sh = { "shfmt" },
-		bash = { "shfmt" },
-		nix = { "nixfmt" },
-
-		--- Core languages
-		lua = { "stylua" },
-		rust = { "rustfmt" },
-		c = { "clang-format" },
-		cpp = { "clang-format" },
-		python = { "ruff_organize_imports", "ruff_format" },
-
-		--- Web / frontend
-		css = { "prettierd" },
-		vue = { "prettierd" },
-		html = { "prettierd" },
-		scss = { "prettierd" },
-		less = { "prettierd" },
-		json = { "prettierd" },
-		yaml = { "prettierd" },
-		toml = { "prettierd" },
-		jsonc = { "prettierd" },
-		svelte = { "prettierd" },
-		javascript = { "prettierd" },
-		typescript = { "prettierd" },
-		dockerfile = { "prettierd" },
-		javascriptreact = { "prettierd" },
-		typescriptreact = { "prettierd" },
-	},
-
-	formatters = {
-		shfmt = {
-			command = "shfmt",
-			args = { "-i", "2", "-bn", "-ci", "-ln", "bash" },
-			stdin = true,
-		},
-	},
-	default_format_opts = {
-		lsp_format = "fallback",
-	},
-})
-
-map({ "n", "v" }, "<leader>fm", function()
-	require("conform").format({
-		async = true,
-		lsp_fallback = true,
-		timeout_ms = 500,
-	})
-end, { desc = "[F]or[m]at buffer" })
-map("v", "<leader>f", function()
-	require("conform").format({
-		async = true,
-		lsp_fallback = true,
-		range = {
-			["start"] = vim.api.nvim_buf_get_mark(0, "<"),
-			["end"] = vim.api.nvim_buf_get_mark(0, ">"),
-		},
-	})
-end, { desc = "[F]ormat selection" })
-
---------------------------------------------------
---- Mini ( One line setup Plugins )
---------------------------------------------------
-require("mini.ai").setup()
-require("mini.icons").setup()
-require("mini.extra").setup()
--- require("mini.animate").setup()
-require("mini.tabline").setup()
-require("mini.surround").setup()
-require("mini.operators").setup()
-require("mini.cursorword").setup()
-
---------------------------------------------------
---- Dashboard
---------------------------------------------------
-local starter = require("mini.starter")
-starter.setup()
-
---------------------------------------------------
---- Trimming
---------------------------------------------------
-require("mini.trailspace").setup()
-
-vim.keymap.set("n", "<Leader>tw", function()
-	require("mini.trailspace").trim()
-	require("mini.trailspace").trim_last_lines()
-end, { desc = "Trim all trailing whitespace & lines" })
-
---------------------------------------------------
---- Explorer
---------------------------------------------------
-local files = require("mini.files")
-files.setup({})
-map("n", "<leader>e", function()
-	files.open(vim.api.nvim_buf_get_name(0), true)
-end, { desc = "Open file explorer (Directory of current file)" })
-map("n", "<leader>E", function()
-	files.open(vim.uv.cwd(), true)
-end, { desc = "Open file explorer (cwd)" })
-
---------------------------------------------------
---- IndentScope
---------------------------------------------------
-require("mini.indentscope").setup({
-	symbol = "│",
-	options = { try_as_border = true },
-	draw = {
-		delay = 50,
-		animation = require("mini.indentscope").gen_animation.none(),
-	},
-})
-vim.api.nvim_set_hl(0, "MiniIndentscopeSymbol", {
-	fg = "#F09676",
-	nocombine = true,
-})
-
---------------------------------------------------
---- MiniMap
---------------------------------------------------
-local minimap = require("mini.map")
-
-minimap.setup({
-	integrations = {
-		minimap.gen_integration.builtin_search(),
-		minimap.gen_integration.diagnostic(),
-		minimap.gen_integration.gitsigns(),
-	},
-})
-
-vim.keymap.set("n", "<Leader>mm", minimap.toggle, { desc = "Toggle Minimap" })
-
---------------------------------------------------
---- Sessions
---------------------------------------------------
-local MiniSessions = require("mini.sessions")
-MiniSessions.setup({
-	autoread = false,
-	autowrite = true,
-})
-
-vim.keymap.set("n", "<leader>ss", function()
-	MiniSessions.select()
-end, { desc = "Select Session" })
-
--- Keybind to save the current state as a new session
-vim.keymap.set("n", "<leader>sw", function()
-	local name = vim.fn.input("Session name: ")
-	if name ~= "" then
-		MiniSessions.write(name)
+----------------------------------------------------------
+--- Find Files
+----------------------------------------------------------
+function _G.native_find(text, _)
+	local cmd
+	if vim.fn.executable("rg") == 1 then
+		cmd = { "rg", "--files", "--hidden", "--glob", "!.git" }
+	elseif vim.fn.executable("fd") == 1 then
+		cmd = { "fd", "--type", "f", "--hidden", "--exclude", ".git" }
+	else
+		-- POSIX fallback
+		cmd = { "find", ".", "-type", "f", "-not", "-path", "*/.git/*", "-not", "-path", "*/node_modules/*" }
 	end
-end, { desc = "Write Session" })
 
-vim.keymap.set("n", "<leader>sd", function()
-	local name = vim.fn.input("Session name to delete: ")
-	if name ~= "" then
-		MiniSessions.delete(name)
+	local files = vim.fn.systemlist(cmd)
+	if vim.v.shell_error ~= 0 then
+		return {}
 	end
-end, { desc = "Delete Session" })
 
---------------------------------------------------
---- Notifications
---------------------------------------------------
-local ok, mini_notify = pcall(require, "mini.notify")
-if not ok then
-	vim.notify("mini.notify not found", vim.log.levels.ERROR)
-	return
+	-- Clean up "./" prefix from POSIX find
+	if vim.fn.executable("rg") == 0 and vim.fn.executable("fd") == 0 then
+		for i, f in ipairs(files) do
+			files[i] = f:sub(1, 2) == "./" and f:sub(3) or f
+		end
+	end
+
+	return vim.fn.matchfuzzy(files, text)
 end
+vim.opt.findfunc = "v:lua.native_find"
+map("n", "<leader>ff", ":find ", { silent = false })
 
-mini_notify.setup({
-	window = {
-		config = {
-			row = 1,
-			border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" },
-		},
-		max_width_share = 0.400,
-	},
-	lsp_progress = {
-		enable = true,
-		duration_last = 1000,
-	},
-})
+----------------------------------------------------------
+--- Grep Files
+----------------------------------------------------------
+if vim.fn.executable("rg") == 1 then
+	vim.opt.grepprg = "rg --vimgrep --smart-case --hidden"
+	vim.opt.grepformat = "%f:%l:%c:%m"
+else
+	vim.opt.grepprg = "grep -Rn --exclude-dir=.git --exclude-dir=node_modules"
+	vim.opt.grepformat = "%f:%l:%m"
+end
+map("n", "<leader>fg", function()
+	vim.ui.input({ prompt = "Grep: " }, function(pattern)
+		if not pattern or pattern == "" then
+			return
+		end
 
-vim.notify = mini_notify.make_notify({
-	ERROR = { duration = 5000 },
-	WARN = { duration = 4000 },
-	INFO = { duration = 3000 },
-})
+		local cmd, fmt
+		if vim.fn.executable("rg") == 1 then
+			cmd = { "rg", "--vimgrep", "--smart-case", "--hidden", pattern }
+			fmt = "%f:%l:%c:%m"
+		else
+			-- POSIX fallback
+			cmd = { "grep", "-Rn", "--exclude-dir=.git", "--exclude-dir=node_modules", pattern, "." }
+			fmt = "%f:%l:%m"
+		end
 
-map("n", "<leader>nd", mini_notify.clear, { desc = "Dismiss all notifications" })
-map("n", "<leader>nh", mini_notify.show_history, { desc = "Notification history" })
-
---------------------------------------------------
---- Git
---------------------------------------------------
-require("mini.git").setup()
-require("mini.diff").setup({
-	view = {
-		style = "sign",
-		signs = {
-			add = "+",
-			change = "~",
-			delete = "_",
-		},
-	},
-})
-
-map("n", "<leader>gs", "<cmd>Git status<CR>", { desc = "Git Status" })
-map("n", "<leader>gc", "<cmd>Git commit<CR>", { desc = "Git Commit" })
-map("n", "<leader>gL", "<cmd>Git log --oneline<CR>", { desc = "Git Log" })
-map({ "n", "x" }, "<leader>gh", function()
-	require("mini.git").show_range_history()
-end, { desc = "Git Range History" })
-map("n", "]h", function()
-	require("mini.diff").goto_hunk("next")
-end, { desc = "Next Git Hunk" })
-map("n", "[h", function()
-	require("mini.diff").goto_hunk("prev")
-end, { desc = "Previous Git Hunk" })
-map("n", "]H", function()
-	require("mini.diff").goto_hunk("last")
-end, { desc = "Last Git Hunk" })
-map("n", "[H", function()
-	require("mini.diff").goto_hunk("first")
-end, { desc = "First Git Hunk" })
-map("n", "<leader>go", function()
-	require("mini.diff").toggle_overlay(0)
-end, { desc = "Toggle Diff Overlay" })
-
---------------------------------------------------
---- Which Key
---------------------------------------------------
-local miniclue = require("mini.clue")
-
-miniclue.setup({
-	triggers = {
-		-- Leader triggers
-		{ mode = "n", keys = "<leader>" },
-		{ mode = "x", keys = "<leader>" },
-
-		-- Built-in commands
-		{ mode = "n", keys = "g" },
-		{ mode = "x", keys = "g" },
-		{ mode = "n", keys = "z" },
-		{ mode = "x", keys = "z" },
-		{ mode = "n", keys = "'" },
-		{ mode = "n", keys = "`" },
-		{ mode = "x", keys = "'" },
-		{ mode = "x", keys = "`" },
-		{ mode = "n", keys = '"' },
-		{ mode = "x", keys = '"' },
-		{ mode = "i", keys = "<C-r>" },
-		{ mode = "c", keys = "<C-r>" },
-		{ mode = "n", keys = "<C-w>" },
-	},
-
-	clues = {
-		miniclue.gen_clues.g(),
-		miniclue.gen_clues.z(),
-		miniclue.gen_clues.marks(),
-		miniclue.gen_clues.registers(),
-		miniclue.gen_clues.windows(),
-	},
-})
-
---------------------------------------------------
---- Fuzzy Finder
---------------------------------------------------
-local pick = require("mini.pick")
-
-pick.setup({
-	window = {
-		config = function()
-			local height = math.floor(0.4 * vim.o.lines)
-			return {
-				relative = "editor",
-				anchor = "SW",
-				height = height,
-				width = vim.o.columns,
-				row = vim.o.lines,
-				col = 0,
-				border = "solid",
-			}
-		end,
-		prompt_prefix = "󰍉=> ",
-	},
-	mappings = {
-		move_up = "<C-k>",
-		move_down = "<C-j>",
-		move_up = "<S-Tab>",
-		move_down = "<Tab>",
-		toggle_info = "<M-H>",
-		toggle_preview = "<M-L>",
-	},
-	options = {
-		use_cache = false,
-	},
-})
-
-vim.ui.select = pick.ui_select
-
-local has_rg = vim.fn.executable("rg") == 1
-
-local function pick_cli_with_icons(command)
-	pick.builtin.cli({
-		command = command,
-		postprocess = function(lines)
-			local items = {}
-			for _, line in ipairs(lines) do
-				if line ~= "" then
-					table.insert(items, { path = line, text = line })
+		vim.system(cmd, { text = true }, function(out)
+			vim.schedule(function()
+				local lines = vim.split(out.stdout or "", "\n")
+				if #lines > 0 and lines[#lines] == "" then
+					table.remove(lines)
 				end
-			end
-			return items
-		end,
-	}, {
-		source = {
-			show = function(buf_id, items, query)
-				pick.default_show(buf_id, items, query, { show_icons = true })
-			end,
-		},
-	})
+
+				if #lines > 0 then
+					vim.fn.setqflist({}, " ", { title = "Grep: " .. pattern, lines = lines, efm = fmt })
+					vim.cmd("copen")
+				else
+					vim.notify("No matches found for: " .. pattern, vim.log.levels.INFO)
+				end
+			end)
+		end)
+	end)
+end, { silent = true })
+
+----------------------------------------------------------
+--- Formatting
+----------------------------------------------------------
+local fmts = {
+	nixfmt = { "nixfmt", "-" },
+	stylua = { "stylua", "-" },
+	mdformat = { "mdformat", "-" },
+	sql_formatter = { "sql-formatter" },
+	["clang-format"] = { "clang-format" },
+	prettierd = { "prettierd", "%filepath%" },
+	rustfmt = { "rustfmt", "--emit", "stdout" },
+	shfmt = { "shfmt", "-i", "2", "-bn", "-ci", "-ln", "bash" },
+	ruff = { "ruff", "format", "--stdin-filename", "%", "-" },
+	ruff_isort = { "ruff", "check", "--select", "I", "--fix", "--silent", "--exit-zero", "--stdin-filename", "%", "-" },
+}
+
+local ft_map = {
+	sh = { "shfmt" },
+	nix = { "nixfmt" },
+	lua = { "stylua" },
+	bash = { "shfmt" },
+	rust = { "rustfmt" },
+	c = { "clang-format" },
+	cpp = { "clang-format" },
+	markdown = { "mdformat" },
+	sql = { "sql_formatter" },
+	css = { "prettierd" },
+	vue = { "prettierd" },
+	html = { "prettierd" },
+	scss = { "prettierd" },
+	less = { "prettierd" },
+	json = { "prettierd" },
+	yaml = { "prettierd" },
+	toml = { "prettierd" },
+	jsonc = { "prettierd" },
+	svelte = { "prettierd" },
+	javascript = { "prettierd" },
+	typescript = { "prettierd" },
+	dockerfile = { "prettierd" },
+	javascriptreact = { "prettierd" },
+	typescriptreact = { "prettierd" },
+	python = { "ruff_isort", "ruff" },
+}
+
+local function strip_trailing_ws(buf)
+	local cursor = vim.api.nvim_win_get_cursor(0)
+	local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+	local changed = false
+
+	for i, line in ipairs(lines) do
+		local stripped = line:gsub("%s+$", "")
+		if stripped ~= line then
+			lines[i] = stripped
+			changed = true
+		end
+	end
+
+	if changed then
+		vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+		local safe_row = math.min(cursor[1], #lines)
+		local safe_col = math.min(cursor[2], #lines[safe_row] or 0)
+		vim.api.nvim_win_set_cursor(0, { safe_row, safe_col })
+	end
 end
 
-map("n", "<leader><space>", function()
-	if has_rg then
-		pick_cli_with_icons({
-			"sh",
-			"-c",
-			"rg --files --no-ignore --hidden --glob=!.git/* --glob=!.cache/* --glob=!.local/* --glob=!node_modules/*",
-		})
-	else
-		pick_cli_with_icons({
-			"sh",
-			"-c",
-			"find -L . -type f -not -path '*/.git/*' -not -path '*/.cache/*' -not -path '*/.local/*' -not -path '*/node_modules/*'",
-		})
-	end
-end, { desc = "Find Files" })
+vim.api.nvim_create_autocmd("BufWritePre", {
+	callback = function(args)
+		local buf, ft = args.buf, vim.bo[args.buf].filetype
+		local fname = vim.api.nvim_buf_get_name(buf)
+		local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+		local input = table.concat(lines, "\n") .. "\n"
+		local applied = false
 
-local function static_grep_with_icons()
-	local cmd_str
-	if has_rg then
-		cmd_str =
-			'rg --line-number --no-heading --color=never --hidden --no-messages --glob=!.git/* --glob=!.cache/* --glob=!.local/* --glob=!node_modules/* --no-ignore "" . 2>/dev/null || true'
-	else
-		cmd_str =
-			'grep -Rna --exclude-dir=.git --exclude-dir=.cache --exclude-dir=.local --exclude-dir=node_modules "" . 2>/dev/null || true'
-	end
-
-	pick.builtin.cli({
-		command = { "sh", "-c", cmd_str },
-		postprocess = function(lines)
-			local items = {}
-			for _, line in ipairs(lines) do
-				if line ~= "" then
-					local file, lnum, text = line:match("^(.-):(%d+):(.*)$")
-					if file and lnum then
-						file = file:gsub("^%./", "")
-						table.insert(items, {
-							path = file,
-							lnum = tonumber(lnum),
-							text = line,
-						})
+		-- 1. Try custom formatters (if executable)
+		if ft_map[ft] then
+			for _, name in ipairs(ft_map[ft]) do
+				local def = fmts[name]
+				if def and vim.fn.executable(def[1]) == 1 then
+					local cmd = vim.deepcopy(def)
+					for i, v in ipairs(cmd) do
+						cmd[i] = v:gsub("%%filepath%%", fname):gsub("%%", fname)
+					end
+					local out = vim.fn.system(cmd, input)
+					if vim.v.shell_error == 0 then
+						input, applied = out, true
 					end
 				end
 			end
-			return items
-		end,
-	}, {
-		source = {
-			show = function(buf_id, items, query)
-				pick.default_show(buf_id, items, query, { show_icons = true })
-			end,
-		},
-	})
-end
-map("n", "<leader>/", static_grep_with_icons, { desc = "Static Grep" })
 
-map("n", "<leader>bf", "<cmd>Pick buffers<CR>", { desc = "Buffers" })
-map("n", "<leader>hp", "<cmd>Pick help<CR>", { desc = "Help Tags" })
-map("n", "<leader>rl", "<cmd>Pick resume<CR>", { desc = "Resume Last Picker" })
+			if applied then
+				local out = vim.split(input, "\n")
 
---------------------------------------------------
---- Mini Statusline
---------------------------------------------------
-local st = require("mini.statusline")
+				if #out > 0 and out[#out] == "" then
+					table.remove(out)
+				end
+				if #out == 0 then
+					table.insert(out, "")
+				end
 
--- Tokyonight colors
-local sbg = "#1a1b26"
-local sbg_alt = "#24283b"
-local sfg = "#c0caf5"
-local scomment = "#3b4261"
+				local cursor = vim.api.nvim_win_get_cursor(0)
+				vim.api.nvim_buf_set_lines(buf, 0, -1, false, out)
 
--- Accent colors
-local cyan = "#7dcfff"
-local blue = "#7aa2f7"
-local purple = "#bb9af7"
-local green = "#9ece6a"
-local orange = "#ff9e64"
-local red = "#f7768e"
+				local safe_row = math.min(cursor[1], #out)
+				local safe_col = math.min(cursor[2], #out[safe_row] or 0)
 
--- Set highlights
-vim.api.nvim_set_hl(0, "StatusLine", { bg = sbg, fg = sfg })
-vim.api.nvim_set_hl(0, "StatusLineNC", { bg = sbg_alt, fg = scomment })
-vim.api.nvim_set_hl(0, "StatusLineGit", { fg = orange, bg = sbg })
-vim.api.nvim_set_hl(0, "StatusLineDiff", { fg = green, bg = sbg })
-vim.api.nvim_set_hl(0, "StatusLineLsp", { fg = blue, bg = sbg })
-vim.api.nvim_set_hl(0, "StatusLineDiag", { fg = red, bg = sbg, bold = true })
-vim.api.nvim_set_hl(0, "MiniStatuslineFilename", { fg = purple, bg = sbg, bold = true })
+				vim.api.nvim_win_set_cursor(0, { safe_row, safe_col })
+				return
+			end
+		end
 
--- Mode colors (high contrast)
-vim.api.nvim_set_hl(0, "MiniStatuslineModeNormal", { fg = sbg, bg = blue, bold = true })
-vim.api.nvim_set_hl(0, "MiniStatuslineModeInsert", { fg = sbg, bg = green, bold = true })
-vim.api.nvim_set_hl(0, "MiniStatuslineModeVisual", { fg = sbg, bg = purple, bold = true })
-vim.api.nvim_set_hl(0, "MiniStatuslineModeReplace", { fg = sbg, bg = cyan, bold = true })
-vim.api.nvim_set_hl(0, "MiniStatuslineModeCommand", { fg = sbg, bg = red, bold = true })
+		-- 2. Fallback to LSP
+		for _, c in ipairs(vim.lsp.get_clients({ bufnr = buf })) do
+			if c:supports_method("textDocument/formatting") then
+				vim.lsp.buf.format({ bufnr = buf, async = false })
+				return
+			end
+		end
 
--- Helper functions
-local function lsp()
-	local clients = vim.lsp.get_clients({ bufnr = 0 })
-	if #clients == 0 then
-		return ""
-	end
-	local names = {}
-	for _, client in ipairs(clients) do
-		table.insert(names, client.name)
-	end
-	return " " .. table.concat(names, " ")
-end
-
-local function size()
-	local s = vim.fn.getfsize(vim.fn.expand("%:p"))
-	if s <= 0 then
-		return ""
-	end
-	local units = { "B", "K", "M", "G" }
-	local i = 1
-	while s > 1024 and i < #units do
-		s = s / 1024
-		i = i + 1
-	end
-	return string.format("󰗮 %.1f%s", s, units[i])
-end
-
--- Setup
-st.setup({
-	content = {
-		active = function()
-			local mode, mode_hl = st.section_mode({ trunc_width = 120 })
-			return st.combine_groups({
-				{ hl = mode_hl, strings = { mode } },
-				{ hl = "StatusLineGit", strings = { st.section_git({ trunc_width = 40 }) } },
-				{ hl = "StatusLineDiff", strings = { st.section_diff({ trunc_width = 75 }) } },
-				"%<",
-				{ hl = "MiniStatuslineFilename", strings = { st.section_filename({ trunc_width = 140 }) } },
-				"%=",
-				{ hl = "StatusLineLsp", strings = { lsp() } },
-				{ hl = "StatusLineDiag", strings = { st.section_diagnostics({ trunc_width = 75 }) } },
-				{ hl = "MiniStatuslineFileinfo", strings = { size() } },
-				{ hl = mode_hl, strings = { st.section_location({ trunc_width = 75 }) } },
-			})
-		end,
-	},
+		-- 3. No formatter found
+		if ft ~= "markdown" then
+			strip_trailing_ws(buf)
+		end
+	end,
 })
 
---------------------------------------------------
---- Mini Hipatterns
---------------------------------------------------
-local hipatterns = require("mini.hipatterns")
-
-local function get_luminance(r, g, b)
-	local function calc(c)
-		return c <= 0.03928 and (c / 12.92) or ((c + 0.055) / 1.055) ^ 2.4
-	end
-	return 0.2126 * calc(r) + 0.7152 * calc(g) + 0.0722 * calc(b)
-end
-
-local cache = {}
-local function make_highlight(hex)
-	if cache[hex] then
-		return cache[hex]
+----------------------------------------------------------
+--- Status Line
+----------------------------------------------------------
+local function setup_statusline_highlights()
+	local function get_c(name, attr, fallback)
+		local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = name, link = true })
+		if not ok or not hl then
+			return fallback
+		end
+		return hl[attr] or fallback
 	end
 
-	local name = "MiniHipatterns_" .. hex:sub(2)
-	if vim.fn.hlexists(name) == 0 then
-		local r = tonumber(hex:sub(2, 3), 16) / 255
-		local g = tonumber(hex:sub(4, 5), 16) / 255
-		local b = tonumber(hex:sub(6, 7), 16) / 255
+	local stl_bg = get_c("StatusLine", "bg", "#1e1e2e")
+	local stl_fg = get_c("StatusLine", "fg", "#cdd6f4")
 
-		local fg = get_luminance(r, g, b) > 0.179 and "#000000" or "#ffffff"
-		vim.api.nvim_set_hl(0, name, { fg = fg, bg = hex })
+	local mode_colors = {
+		StlNormal = get_c("Directory", "fg", "#89b4fa"),
+		StlInsert = get_c("String", "fg", "#a6e3a1"),
+		StlVisual = get_c("Special", "fg", "#f5c2e7"),
+		StlCommand = get_c("Type", "fg", "#f9e2af"),
+		StlReplace = get_c("ErrorMsg", "fg", "#f38ba8"),
+		StlTerminal = get_c("Title", "fg", "#94e2d5"),
+	}
+	for group, bg in pairs(mode_colors) do
+		vim.api.nvim_set_hl(0, group, { fg = stl_bg, bg = bg, bold = true })
 	end
 
-	cache[hex] = name
-	return name
+	vim.api.nvim_set_hl(0, "StlGit", {
+		fg = "#7287fd",
+		bg = stl_bg,
+		bold = true,
+	})
+
+	vim.api.nvim_set_hl(0, "StlMacro", {
+		fg = stl_bg,
+		bg = get_c("Constant", "fg", "#fab387"),
+		bold = true,
+	})
+
+	vim.api.nvim_set_hl(0, "StlDiagError", {
+		fg = stl_bg,
+		bg = get_c("Error", "fg", "#f38ba8"),
+		bold = true,
+	})
+	vim.api.nvim_set_hl(0, "StlDiagWarn", {
+		fg = stl_bg,
+		bg = get_c("Constant", "fg", "#fab387"),
+		bold = true,
+	})
+	vim.api.nvim_set_hl(0, "StlDiagInfo", {
+		fg = stl_bg,
+		bg = stl_fg,
+		bold = true,
+	})
+	vim.api.nvim_set_hl(0, "StlDiagHint", {
+		fg = stl_bg,
+		bg = get_c("String", "fg", "#a6e3a1"),
+		bold = true,
+	})
+
+	vim.api.nvim_set_hl(0, "StlLsp", {
+		fg = stl_bg,
+		bg = get_c("Keyword", "fg", "#cba6f7"),
+		bold = true,
+	})
+
+	vim.api.nvim_set_hl(0, "StlFiletype", {
+		fg = stl_bg,
+		bg = get_c("Operator", "fg", "#89dceb"),
+		bold = true,
+	})
+
+	vim.api.nvim_set_hl(0, "StlPosition", {
+		fg = stl_bg,
+		bg = get_c("Character", "fg", "#f2cdcd"),
+		bold = true,
+	})
+
+	vim.api.nvim_set_hl(0, "StlProgress", {
+		fg = stl_bg,
+		bg = get_c("String", "fg", "#a6e3a1"),
+		bold = true,
+	})
+
+	vim.api.nvim_set_hl(0, "StlPath", { fg = stl_fg, bg = stl_bg })
 end
 
---- Color Conversions
-local function to_hex(r, g, b)
-	return string.format(
-		"#%02x%02x%02x",
-		math.floor(r * 255 + 0.5),
-		math.floor(g * 255 + 0.5),
-		math.floor(b * 255 + 0.5)
-	)
+setup_statusline_highlights()
+vim.api.nvim_create_autocmd("ColorScheme", { callback = setup_statusline_highlights })
+
+vim.api.nvim_create_autocmd({ "LspAttach", "LspDetach", "BufEnter" }, {
+	callback = function(ev)
+		local clients = vim.lsp.get_clients({ bufnr = ev.buf })
+		local names = {}
+		for _, c in ipairs(clients) do
+			table.insert(names, c.name)
+		end
+		vim.b[ev.buf].lsp_names = #names > 0 and table.concat(names, ",") or ""
+	end,
+})
+
+local modes = {
+	n = "NORMAL",
+	i = "INSERT",
+	v = "VISUAL",
+	V = "V-LINE",
+	["\22"] = "V-BLOCK",
+	c = "COMMAND",
+	t = "TERMINAL",
+	R = "REPLACE",
+	s = "SELECT",
+	S = "S-LINE",
+	["\19"] = "S-BLOCK",
+}
+
+function _G._statusline()
+	local raw_mode = vim.fn.mode()
+	local mode = modes[raw_mode] or raw_mode:upper()
+
+	local base = raw_mode:sub(1, 1)
+	local hl = "StlNormal"
+	if base == "i" then
+		hl = "StlInsert"
+	elseif base == "v" or base == "V" or base == "\22" or base == "s" or base == "S" or base == "\19" then
+		hl = "StlVisual"
+	elseif base == "c" then
+		hl = "StlCommand"
+	elseif base == "R" then
+		hl = "StlReplace"
+	elseif base == "t" then
+		hl = "StlTerminal"
+	end
+
+	local mode_str = "%#" .. hl .. "# " .. mode .. " %*"
+	local branch = vim.b.git_branch and "%#StlGit#  " .. vim.b.git_branch .. " %*" or ""
+	local path = "%#StlPath# " .. (vim.b.rel_path or "%f") .. " %m%r%h%w %*"
+
+	local macro = ""
+	local reg = vim.fn.reg_recording()
+	if reg ~= "" then
+		macro = "%#StlMacro# 󰑋 @" .. reg .. " %*"
+	end
+
+	local diag = ""
+	local counts = vim.diagnostic.count(0) or {}
+	local diag_map = {
+		{ sev = 1, icon = "󰅚", group = "StlDiagError" },
+		{ sev = 2, icon = "󰀪", group = "StlDiagWarn" },
+		{ sev = 3, icon = "󰋽", group = "StlDiagInfo" },
+		{ sev = 4, icon = "󰌶", group = "StlDiagHint" },
+	}
+	for _, d in ipairs(diag_map) do
+		if counts[d.sev] and counts[d.sev] > 0 then
+			diag = diag .. "%#" .. d.group .. "# " .. d.icon .. " " .. counts[d.sev] .. " %*"
+		end
+	end
+
+	local lsp = ""
+	if vim.b.lsp_names and vim.b.lsp_names ~= "" then
+		lsp = "%#StlLsp# 󰒋 " .. vim.b.lsp_names .. " %*"
+	end
+
+	local ft = "%#StlFiletype# " .. (vim.bo.filetype ~= "" and vim.bo.filetype or "plain") .. " %*"
+
+	local pos = "%#StlPosition#  " .. "%l:%c %*"
+
+	local progress = "%#StlProgress# %p%% %*"
+
+	return mode_str .. branch .. path .. "%=" .. macro .. diag .. lsp .. ft .. pos .. progress
 end
 
-local function hsl_to_rgb(h, s, l)
-	h, s, l = h / 360, s / 100, l / 100
+vim.api.nvim_create_autocmd("BufEnter", {
+	callback = function()
+		if vim.b.git_root ~= nil then
+			return
+		end
+		local filepath = vim.fn.expand("%:p")
+		local filedir = vim.fn.fnamemodify(filepath, ":h")
+		local root = vim.fn.system({ "git", "-C", filedir, "rev-parse", "--show-toplevel" }):gsub("%s+$", "")
+		if root ~= "" and not root:match("^fatal:") then
+			vim.b.git_root = root
+			vim.b.git_branch = vim.fn.system({ "git", "-C", root, "branch", "--show-current" }):gsub("%s+$", "")
+			vim.b.rel_path = filepath:sub(#root + 2)
+		else
+			vim.b.git_root = ""
+			vim.b.git_branch = nil
+			vim.b.rel_path = vim.fn.expand("%:p:~")
+		end
+	end,
+})
+
+vim.api.nvim_create_autocmd("DiagnosticChanged", {
+	callback = function()
+		vim.cmd("redrawstatus!")
+	end,
+})
+
+vim.o.statusline = "%!v:lua._statusline()"
+
+----------------------------------------------------------
+--- Native Colorizer (All formats, no plugins)
+----------------------------------------------------------
+local color_ns = vim.api.nvim_create_namespace("native_colorizer")
+
+local function clamp(v, lo, hi)
+	return math.max(lo, math.min(hi, v))
+end
+
+local function rgb_to_hex(r, g, b)
+	r = clamp(tonumber(r) or 0, 0, 255)
+	g = clamp(tonumber(g) or 0, 0, 255)
+	b = clamp(tonumber(b) or 0, 0, 255)
+	return string.format("#%02x%02x%02x", r, g, b)
+end
+
+local function hsl_to_hex(h, s, l)
+	h = (tonumber(h) or 0) % 360 / 360
+	s = clamp(tonumber(s) or 0, 0, 100) / 100
+	l = clamp(tonumber(l) or 0, 0, 100) / 100
+
 	if s == 0 then
-		return l, l, l
+		local v = math.floor(l * 255)
+		return rgb_to_hex(v, v, v)
 	end
 
-	local function f(p, q, t)
+	local function hue2rgb(p, q, t)
 		if t < 0 then
 			t = t + 1
 		end
@@ -1071,80 +846,459 @@ local function hsl_to_rgb(h, s, l)
 
 	local q = l < 0.5 and l * (1 + s) or l + s - l * s
 	local p = 2 * l - q
-	return f(p, q, h + 1 / 3), f(p, q, h), f(p, q, h - 1 / 3)
+	return rgb_to_hex(hue2rgb(p, q, h + 1 / 3) * 255, hue2rgb(p, q, h) * 255, hue2rgb(p, q, h - 1 / 3) * 255)
 end
 
---- Highlight Group Generators
-local function hex_group(_, match)
-	return make_highlight(match)
+local function get_contrast(hex_color)
+	local r = tonumber(hex_color:sub(2, 3), 16)
+	local g = tonumber(hex_color:sub(4, 5), 16)
+	local b = tonumber(hex_color:sub(6, 7), 16)
+	local luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+	if luminance > 0.5 then
+		return "#1e1e2e"
+	else
+		return "#cdd6f4"
+	end
 end
 
-local function short_hex_group(_, match)
-	local hex = "#" .. match:sub(2):gsub(".", "%1%1")
-	return make_highlight(hex)
+local function paint(buf, row, col_s, col_e, color)
+	local ok, err = pcall(function()
+		local hl = "NC_" .. color:sub(2)
+		vim.api.nvim_set_hl(0, hl, {
+			bg = color,
+			fg = get_contrast(color),
+			bold = true,
+		})
+		vim.api.nvim_buf_set_extmark(buf, color_ns, row, col_s, {
+			end_col = col_e,
+			hl_group = hl,
+		})
+	end)
+	if not ok then
+		vim.notify("Colorizer error: " .. tostring(err), vim.log.levels.DEBUG)
+	end
 end
 
-local function alpha_hex_group(_, match)
-	local hex = match:sub(1, 7) -- Strip alpha channel for the background color
-	return make_highlight(hex)
+vim.api.nvim_create_autocmd({ "BufEnter", "TextChanged", "TextChangedI", "ColorScheme" }, {
+	callback = function()
+		local buf = vim.api.nvim_get_current_buf()
+		vim.api.nvim_buf_clear_namespace(buf, color_ns, 0, -1)
+		local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+
+		for i, line in ipairs(lines) do
+			local row = i - 1
+			local pos = 1
+
+			-- ── HEX: #RGB, #RGBA, #RRGGBB, #RRGGBBAA ──
+			while true do
+				local s, e, hex = line:find("(#[0-9a-fA-F]+)", pos)
+				if not s then
+					break
+				end
+				pos = e + 1
+
+				local digits = hex:sub(2)
+				local len = #digits
+				if len == 3 or len == 4 or len == 6 or len == 8 then
+					if len == 3 or len == 4 then
+						local expanded = ""
+						for j = 1, len do
+							expanded = expanded .. digits:sub(j, j):rep(2)
+						end
+						digits = expanded
+					end
+					paint(buf, row, s - 1, e, "#" .. digits:sub(1, 6))
+				end
+			end
+
+			-- ── RGB / RGBA ──
+			pos = 1
+			while true do
+				local s, e, r, g, b = line:find("rgba?%(%s*(%d+)%s*,%s*(%d+)%s*,%s*(%d+)[^)]*%)", pos)
+				if not s then
+					break
+				end
+				pos = e + 1
+				paint(buf, row, s - 1, e, rgb_to_hex(r, g, b))
+			end
+
+			-- ── HSL / HSLA ──
+			pos = 1
+			while true do
+				local s, e, h, sat, l = line:find("hsla?%(%s*(%d+)%s*,%s*(%d+)%s*%%%s*,%s*(%d+)%s*%%[^)]*%)", pos)
+				if not s then
+					break
+				end
+				pos = e + 1
+				paint(buf, row, s - 1, e, hsl_to_hex(h, sat, l))
+			end
+		end
+	end,
+})
+
+----------------------------------------------------------
+--- Indent Scope
+----------------------------------------------------------
+local indent_ns = vim.api.nvim_create_namespace("native_indentscope")
+
+local function setup_indentscope_hl()
+	local function get_fg(name)
+		local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = name, link = true })
+		return (ok and hl and hl.fg) and hl.fg or nil
+	end
+	local fg = get_fg("CursorLineNr") or get_fg("Special") or get_fg("Comment") or "#a6adc8"
+	vim.api.nvim_set_hl(0, "IndentScopeLine", { fg = fg, bold = true })
 end
 
-local function rgb_group(_, match)
-	local r, g, b = match:match("(%d+)%s*,%s*(%d+)%s*,%s*(%d+)")
-	r, g, b = tonumber(r), tonumber(g), tonumber(b)
-	if not r or r > 255 or g > 255 or b > 255 then
+setup_indentscope_hl()
+vim.api.nvim_create_autocmd("ColorScheme", { callback = setup_indentscope_hl })
+
+vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "BufEnter", "WinEnter", "TextChanged", "TextChangedI" }, {
+	callback = function()
+		local buf = vim.api.nvim_get_current_buf()
+		vim.api.nvim_buf_clear_namespace(buf, indent_ns, 0, -1)
+
+		local row = vim.api.nvim_win_get_cursor(0)[1] - 1
+		local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+		local total = #lines
+
+		local function indent_of(l)
+			if not l or l:match("^%s*$") then
+				return nil
+			end
+			return #(l:match("^(%s*)"))
+		end
+
+		local ci = indent_of(lines[row + 1])
+		if not ci or ci == 0 then
+			return
+		end
+
+		local function compute(level)
+			local top = row
+			while top > 0 do
+				local ind = indent_of(lines[top])
+				if ind and ind < level then
+					break
+				end
+				top = top - 1
+			end
+			local bottom = row
+			while bottom < total - 1 do
+				local ind = indent_of(lines[bottom + 2])
+				if ind and ind < level then
+					break
+				end
+				bottom = bottom + 1
+			end
+			return top, bottom
+		end
+
+		local top, bottom = compute(ci)
+
+		if top == bottom then
+			local parent = nil
+			for i = row, 1, -1 do
+				local ind = indent_of(lines[i])
+				if ind and ind < ci then
+					parent = ind
+					break
+				end
+			end
+			if parent and parent > 0 then
+				ci = parent
+				top, bottom = compute(ci)
+			end
+		end
+
+		local col = ci - 1
+
+		for i = top, bottom do
+			local l = lines[i + 1]
+			if l and #l > col then
+				vim.api.nvim_buf_set_extmark(buf, indent_ns, i, col, {
+					virt_text = { { "┃", "IndentScopeLine" } },
+					virt_text_pos = "overlay",
+					priority = 100,
+				})
+			end
+		end
+	end,
+})
+
+----------------------------------------------------------
+--- Notifications
+----------------------------------------------------------
+local default_notify = vim.notify
+local notif_stack = {}
+local notif_history = {}
+
+local icons = {
+	[vim.log.levels.ERROR] = "❌",
+	[vim.log.levels.WARN] = "⚠️",
+	[vim.log.levels.INFO] = "ℹ️",
+	[vim.log.levels.DEBUG] = "💡",
+	[vim.log.levels.TRACE] = "💡",
+}
+
+local sev = {
+	[vim.log.levels.ERROR] = { name = "ERROR", hl = "DiagnosticError" },
+	[vim.log.levels.WARN] = { name = "WARN", hl = "DiagnosticWarn" },
+	[vim.log.levels.INFO] = { name = "INFO", hl = "DiagnosticInfo" },
+	[vim.log.levels.DEBUG] = { name = "DEBUG", hl = "DiagnosticHint" },
+	[vim.log.levels.TRACE] = { name = "TRACE", hl = "DiagnosticHint" },
+}
+
+local function reposition()
+	local row = 1
+	for _, n in ipairs(notif_stack) do
+		if vim.api.nvim_win_is_valid(n.win) then
+			pcall(vim.api.nvim_win_set_config, n.win, { row = row, col = vim.o.columns - 1 })
+			row = row + vim.api.nvim_win_get_height(n.win) + 1
+		end
+	end
+end
+
+local function close(n)
+	if n.timer then
+		pcall(function()
+			n.timer:stop()
+		end)
+	end
+	if n.win and vim.api.nvim_win_is_valid(n.win) then
+		pcall(vim.api.nvim_win_close, n.win, true)
+	end
+	for i, v in ipairs(notif_stack) do
+		if v == n then
+			table.remove(notif_stack, i)
+			break
+		end
+	end
+	reposition()
+end
+
+local function close_all()
+	for i = #notif_stack, 1, -1 do
+		close(notif_stack[i])
+	end
+end
+
+local function show_history()
+	local lines = {}
+	if #notif_history == 0 then
+		lines = { "(no notifications yet)" }
+	else
+		for i = #notif_history, 1, -1 do
+			local h = notif_history[i]
+			table.insert(lines, string.format("%s  [%-5s] %s", h.time, h.name, h.msg))
+		end
+	end
+
+	local buf = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+	vim.bo[buf].bufhidden = "wipe"
+
+	local width = math.min(80, vim.o.columns - 4)
+	local height = math.max(1, math.min(#lines, vim.o.lines - 6))
+
+	vim.api.nvim_open_win(buf, true, {
+		relative = "editor",
+		width = width,
+		height = height,
+		row = math.max(0, math.floor((vim.o.lines - height) / 2)),
+		col = math.max(0, math.floor((vim.o.columns - width) / 2)),
+		style = "minimal",
+		border = "rounded",
+		title = " Notification History ",
+	})
+	vim.keymap.set("n", "q", "<cmd>close<CR>", { buffer = buf, silent = true })
+end
+
+---@diagnostic disable-next-line: duplicate-set-field
+vim.notify = function(msg, level, opts)
+	level = level or vim.log.levels.INFO
+	local info = sev[level] or sev[vim.log.levels.INFO]
+
+	-- Record history (keep last 100)
+	notif_history[#notif_history + 1] = {
+		time = vim.fn.strftime("%H:%M:%S"),
+		name = info.name,
+		msg = msg,
+	}
+	if #notif_history > 100 then
+		table.remove(notif_history, 1)
+	end
+
+	local ok = pcall(function()
+		local lines = vim.split(msg, "\n")
+		lines[1] = (icons[level] or "ℹ️") .. " " .. lines[1]
+
+		local width = 0
+		for _, l in ipairs(lines) do
+			width = math.max(width, vim.fn.strdisplaywidth(l))
+		end
+		width = math.min(width + 2, vim.o.columns - 4)
+
+		local height = 0
+		for _, l in ipairs(lines) do
+			height = height + math.max(1, math.ceil(vim.fn.strdisplaywidth(l) / width))
+		end
+
+		local buf = vim.api.nvim_create_buf(false, true)
+		vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+		vim.bo[buf].bufhidden = "wipe"
+
+		while #notif_stack >= 5 do
+			close(notif_stack[1])
+		end
+
+		local win = vim.api.nvim_open_win(buf, false, {
+			relative = "editor",
+			anchor = "NE",
+			row = 1,
+			col = vim.o.columns - 1,
+			width = width,
+			height = height,
+			style = "minimal",
+			border = "rounded",
+			title = " " .. info.name .. " ",
+			title_pos = "left",
+		})
+
+		local n = { buf = buf, win = win }
+		notif_stack[#notif_stack + 1] = n
+
+		n.timer = vim.defer_fn(function()
+			close(n)
+		end, level == vim.log.levels.ERROR and 8000 or 4000)
+
+		pcall(function()
+			vim.wo[win].winhighlight = "Normal:NormalFloat,FloatBorder:" .. info.hl
+			vim.wo[win].wrap = true
+		end)
+		reposition()
+	end)
+
+	if not ok then
+		default_notify(msg, level, opts)
+	end
+end
+
+vim.keymap.set("n", "<leader>nh", show_history, { silent = true, desc = "Notification history" })
+vim.keymap.set("n", "<leader>nk", close_all, { silent = true, desc = "Dismiss all notifications" })
+
+----------------------------------------------------------
+--- Git Blame
+----------------------------------------------------------
+local function git_root(buf)
+	local r = vim.b[buf].git_root
+	if r ~= nil then
+		return (r ~= "" and r or nil)
+	end
+	local filepath = vim.api.nvim_buf_get_name(buf)
+	local filedir = vim.fn.fnamemodify(filepath, ":h")
+	r = vim.fn.system({ "git", "-C", filedir, "rev-parse", "--show-toplevel" }):gsub("%s+$", "")
+	vim.b[buf].git_root = (r ~= "" and not r:match("^fatal:")) and r or ""
+	return vim.b[buf].git_root ~= "" and vim.b[buf].git_root or nil
+end
+
+local function blame_current_line()
+	local buf = vim.api.nvim_get_current_buf()
+	local fname = vim.api.nvim_buf_get_name(buf)
+	if fname == "" then
 		return
 	end
-	return make_highlight(to_hex(r / 255, g / 255, b / 255))
+	local root = git_root(buf)
+	local cwd = root or vim.fn.getcwd()
+	local lnum = vim.fn.line(".")
+	vim.system(
+		{ "git", "blame", "-L", lnum .. "," .. lnum, "--porcelain", "--", fname },
+		{ text = true, cwd = cwd },
+		function(out)
+			vim.schedule(function()
+				if out.code ~= 0 then
+					vim.notify("git blame failed", vim.log.levels.WARN)
+					return
+				end
+				local s = out.stdout or ""
+				local sha = s:match("^(%x+)") or ""
+				local author = s:match("author ([^\n]+)") or "unknown"
+				local t = s:match("author%-time (%d+)")
+				local summary = s:match("summary ([^\n]+)") or ""
+				local date = t and os.date("%Y-%m-%d", tonumber(t)) or ""
+				vim.notify(
+					string.format("%s • %s • %s (%s)", author, date, summary, sha:sub(1, 7)),
+					vim.log.levels.INFO
+				)
+			end)
+		end
+	)
 end
 
-local function hsl_group(_, match)
-	local h, s, l = match:match("(%d+%.?%d*)%s*,%s*(%d+%.?%d*)%%?%s*,%s*(%d+%.?%d*)%%?")
-	h, s, l = tonumber(h), tonumber(s), tonumber(l)
-	if not h or h > 360 or not s or s > 100 or not l or l > 100 then
-		return
+vim.keymap.set("n", "<leader>gb", blame_current_line, { silent = true, desc = "Blame current line" })
+
+----------------------------------------------------------
+--- Highlighting Keywords (TODO/NOTE/FIXME/...)
+----------------------------------------------------------
+local kw_ns = vim.api.nvim_create_namespace("native_keywords")
+
+local kw_groups = {
+	TODO = { hl = "KwTodo", theme = "Directory", fb = "#89b4fa" },
+	NOTE = { hl = "KwNote", theme = "Operator", fb = "#89dceb" },
+	WARN = { hl = "KwWarn", theme = "Constant", fb = "#fab387" },
+	HACK = { hl = "KwHack", theme = "Type", fb = "#f9e2af" },
+	FIXME = { hl = "KwFixme", theme = "Error", fb = "#f38ba8" },
+	HINT = { hl = "KwHint", theme = "String", fb = "#a6e3a1" },
+}
+
+local function setup_kw_hl()
+	local function get_fg(name, fb)
+		local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = name, link = true })
+		return (ok and hl and hl.fg) and hl.fg or fb
 	end
-	return make_highlight(to_hex(hsl_to_rgb(h, s, l)))
+	for _, def in pairs(kw_groups) do
+		vim.api.nvim_set_hl(0, def.hl, { fg = get_fg(def.theme, def.fb), bold = true })
+	end
+end
+setup_kw_hl()
+vim.api.nvim_create_autocmd("ColorScheme", { callback = setup_kw_hl })
+
+local function is_word_boundary(line, s, e)
+	local before = s > 1 and line:sub(s - 1, s - 1) or ""
+	local after = line:sub(e + 1, e + 1) or ""
+	return not before:match("[%w_]") and not after:match("[%w_]")
 end
 
---- Setup
-hipatterns.setup({
-	highlighters = {
-		note = { pattern = "%f[%w_]()NOTE()%f[^%w_]", group = "MiniHipatternsNote" },
-		todo = { pattern = "%f[%w_]()TODO()%f[^%w_]", group = "MiniHipatternsTodo" },
-		hack = { pattern = "%f[%w_]()HACK()%f[^%w_]", group = "MiniHipatternsHack" },
-		fixme = { pattern = "%f[%w_]()FIXME()%f[^%w_]", group = "MiniHipatternsFixme" },
-		hex_alpha = { pattern = "#%x%x%x%x%x%x%x%x%f[%X]", group = alpha_hex_group },
-		hex = { pattern = "#%x%x%x%x%x%x%f[%X]", group = hex_group },
-		hex_short = { pattern = "#%x%x%x%f[%X]", group = short_hex_group },
-		rgb = {
-			pattern = "rgba?%(%s*%d+%s*,%s*%d+%s*,%s*%d+[^%)]*%)",
-			group = rgb_group,
-		},
-		hsl = {
-			pattern = "hsla?%(%s*%d+%.?%d*%s*,%s*%d+%.?%d*%%?%s*,%s*%d+%.?%d*%%?[^%)]*%)",
-			group = hsl_group,
-		},
-	},
+vim.api.nvim_create_autocmd({ "BufEnter", "TextChanged", "TextChangedI", "ColorScheme" }, {
+	callback = function()
+		local buf = vim.api.nvim_get_current_buf()
+		vim.api.nvim_buf_clear_namespace(buf, kw_ns, 0, -1)
+		local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+
+		for i, line in ipairs(lines) do
+			local row = i - 1
+			for kw, def in pairs(kw_groups) do
+				local pos = 1
+				while true do
+					local s, e = line:find(kw, pos, true)
+					if not s then
+						break
+					end
+					pos = e + 1
+					if is_word_boundary(line, s, e) then
+						vim.api.nvim_buf_set_extmark(buf, kw_ns, row, s - 1, {
+							end_col = e,
+							hl_group = def.hl,
+						})
+					end
+				end
+			end
+		end
+	end,
 })
 
 --------------------------------------------------
---- AI Completion
---------------------------------------------------
-require("supermaven-nvim").setup({
-	keymaps = {
-		accept_suggestion = "<M-p>",
-		clear_suggestion = "<M-[>",
-		accept_word = "<M-w>",
-	},
-	ignore_filetypes = { "bigfile", "log" },
-	log_level = "info",
-	disable_inline_completion = false,
-	disable_keymaps = false,
-})
-
---------------------------------------------------
---- For running files inside neovim
+--- For running coding files inside neovim
 --------------------------------------------------
 local runners = {
 	python = "python %",
