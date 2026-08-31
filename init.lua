@@ -238,6 +238,12 @@ vim.g.maplocalleader = "\\"
 local map = vim.keymap.set
 
 --- General
+map("n", "j", function()
+	return vim.v.count == 0 and "gj" or "j"
+end, { expr = true, silent = true, desc = "Down (warp-aware)" })
+map("n", "k", function()
+	return vim.v.count == 0 and "gk" or "k"
+end, { expr = true, silent = true, desc = "Up (warp-aware)" })
 map({ "n", "v", "x" }, ";", ":", { noremap = true, silent = false })
 map({ "n", "i", "v", "c", "t", "x", "s", "o" }, "<C-c>", "<Esc>", { noremap = true, silent = false })
 map("n", "<leader>w", ":w<CR>", { noremap = true, silent = false })
@@ -246,6 +252,8 @@ map("n", "<leader>bn", ":bn<CR>", { noremap = true, silent = false })
 map("n", "<leader>bp", ":bp<CR>", { noremap = true, silent = false })
 map("n", "<leader>bd", ":bd<CR>", { noremap = true, silent = false })
 map("n", "<leader>bc", ":enew<CR>", { noremap = true, silent = false })
+map("n", "<leader>sh", ":split<CR>", { noremap = true, silent = true })
+map("n", "<leader>sv", ":vsplit<CR>", { noremap = true, silent = true })
 map("n", "<leader>e", ":Lexplore<CR>", { noremap = true, silent = false })
 map("n", "<F5>", ":edit<CR>", { noremap = true, silent = false })
 map("n", "<leader>rt", ":restart<CR>", { noremap = true, silent = false })
@@ -257,7 +265,7 @@ map("n", "<leader>tt", ":terminal<CR>", { noremap = true, silent = true })
 map("n", "<leader>so", ":update<CR> :source<CR>", { noremap = true, silent = false })
 map({ "v", "x" }, "<C-_>", "gc", { noremap = true, desc = "Toggle comment" })
 map("n", "<C-_>", "gcc", { noremap = true, silent = true, desc = "Toggle comment" })
-vim.keymap.set("n", "<leader>sp", function()
+map("n", "<leader>sp", function()
 	vim.wo.spell = not vim.wo.spell
 	vim.notify("Spell " .. (vim.wo.spell and "on" or "off"), vim.log.levels.INFO)
 end, { silent = true, desc = "Toggle spellcheck" })
@@ -275,18 +283,6 @@ map("n", "<leader>cp", function()
 	end
 end, { desc = "Change cwd to specified directory" })
 
---- better movement in wrapped text
-map("n", "j", function()
-	return vim.v.count == 0 and "gj" or "j"
-end, { expr = true, silent = true, desc = "Down (warp-aware)" })
-map("n", "k", function()
-	return vim.v.count == 0 and "gk" or "k"
-end, { expr = true, silent = true, desc = "Up (warp-aware)" })
-
---- Splits
-map("n", "<leader>sv", ":vsplit<CR>", { noremap = true, silent = true })
-map("n", "<leader>sh", ":split<CR>", { noremap = true, silent = true })
-
 --- To move around neovim panes and tmux panes
 local function tmux_nav(dir)
 	local tmux_dir = ({ h = "-L", j = "-D", k = "-U", l = "-R" })[dir]
@@ -297,7 +293,6 @@ local function tmux_nav(dir)
 		vim.cmd("wincmd " .. dir)
 	end
 end
-
 vim.keymap.set("n", "<C-h>", function()
 	tmux_nav("h")
 end, { silent = true, desc = "Move to left split/tmux pane" })
@@ -1551,7 +1546,6 @@ function grapple.menu()
 	end, { buffer = buf, silent = true, desc = "Clear all marks" })
 end
 
--- Keymaps
 vim.keymap.set("n", "<leader>ha", grapple.toggle, { desc = "Grapple: Toggle file" })
 vim.keymap.set("n", "<leader>hh", grapple.menu, { desc = "Grapple: Menu" })
 
