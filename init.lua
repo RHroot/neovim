@@ -800,7 +800,7 @@ vim.api.nvim_create_autocmd("DiagnosticChanged", {
 vim.o.statusline = "%!v:lua._statusline()"
 
 ----------------------------------------------------------
---- Native Colorizer (All formats, no plugins)
+--- Highlighting Colors Formats
 ----------------------------------------------------------
 local color_ns = vim.api.nvim_create_namespace("native_colorizer")
 
@@ -1336,3 +1336,204 @@ vim.keymap.set("n", "<leader>rn", function()
 end)
 
 vim.o.splitbelow = true
+
+----------------------------------------------------------
+--- Grapple (Project File Marks)
+----------------------------------------------------------
+local grapple = {
+	save_path = vim.fn.stdpath("data") .. "/grapple.json",
+}
+
+local function load_data()
+	if vim.fn.filereadable(grapple.save_path) == 1 then
+		local content = table.concat(vim.fn.readfile(grapple.save_path), "\n")
+		local ok, data = pcall(vim.json.decode, content)
+		if ok and type(data) == "table" then
+			return data
+		end
+	end
+	return {}
+end
+
+local function save_data(data)
+	local ok, json = pcall(vim.json.encode, data)
+	if ok then
+		vim.fn.writefile({ json }, grapple.save_path)
+	end
+end
+
+local function get_project_key()
+	local root = vim.b.git_root
+	if root and root ~= "" then
+		return root
+	end
+
+	local filepath = vim.fn.expand("%:p")
+	if filepath == "" then
+		return vim.fn.getcwd()
+	end
+
+	local filedir = vim.fn.fnamemodify(filepath, ":h")
+	local r = vim.fn.system({ "git", "-C", filedir, "rev-parse", "--show-toplevel" }):gsub("%s+$", "")
+	if r ~= "" and not r:match("^fatal:") then
+		return r
+	end
+	return vim.fn.getcwd()
+end
+
+local function get_marks()
+	local data = load_data()
+	return data[get_project_key()] or {}
+end
+
+local function set_marks(marks)
+	local data = load_data()
+	local key = get_project_key()
+	if #marks == 0 then
+		data[key] = nil
+	else
+		data[key] = marks
+	end
+	save_data(data)
+end
+
+local function get_relative_path(filepath, root)
+	if not root or root == "" then
+		return vim.fn.fnamemodify(filepath, ":~")
+	end
+	local rel = filepath:match("^" .. vim.pesc(root) .. "[/\\](.*)$")
+	if rel then
+		return rel
+	end
+	return vim.fn.fnamemodify(filepath, ":~")
+end
+
+function grapple.toggle()
+	local marks = get_marks()
+	local current_file = vim.fn.expand("%:p")
+	if current_file == "" then
+		return
+	end
+
+	local cursor = vim.api.nvim_win_get_cursor(0)
+
+	for i, mark in ipairs(marks) do
+		if mark.file == current_file then
+			table.remove(marks, i)
+			set_marks(marks)
+			vim.notify("Grapple: Unhooked " .. vim.fn.fnamemodify(current_file, ":t"), vim.log.levels.INFO)
+			return
+		end
+	end
+
+	table.insert(marks, { file = current_file, row = cursor[1], col = cursor[2] })
+	set_marks(marks)
+	vim.notify("Grapple: Hooked " .. vim.fn.fnamemodify(current_file, ":t"), vim.log.levels.INFO)
+end
+
+function grapple.nav(index)
+	local marks = get_marks()
+	local mark = marks[index]
+	if not mark then
+		vim.notify("Grapple: Slot " .. index .. " is empty", vim.log.levels.WARN)
+		return
+	end
+
+	if vim.fn.filereadable(mark.file) == 0 then
+		vim.notify("Grapple: File not found", vim.log.levels.ERROR)
+		return
+	end
+
+	vim.cmd("edit " .. vim.fn.fnameescape(mark.file))
+	pcall(vim.api.nvim_win_set_cursor, 0, { mark.row, mark.col })
+end
+
+function grapple.menu()
+	local marks = get_marks()
+	if #marks == 0 then
+		vim.notify("Grapple: No hooks set for this project", vim.log.levels.INFO)
+		return
+	end
+
+	local key = get_project_key()
+	local lines = {}
+	for i, mark in ipairs(marks) do
+		local short = get_relative_path(mark.file, key)
+		table.insert(lines, string.format("%d. %s", i, short))
+	end
+
+	local buf = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+	vim.bo[buf].bufhidden = "wipe"
+	vim.bo[buf].modifiable = false
+
+	local width = 0
+	for _, l in ipairs(lines) do
+		width = math.max(width, vim.fn.strdisplaywidth(l))
+	end
+	width = math.min(width + 4, vim.o.columns - 4)
+	local height = #lines
+
+	local win = vim.api.nvim_open_win(buf, true, {
+		relative = "editor",
+		width = width,
+		height = height,
+		row = math.floor((vim.o.lines - height) / 2),
+		col = math.floor((vim.o.columns - width) / 2),
+		style = "minimal",
+		border = "rounded",
+		title = " Grapple ",
+		title_pos = "center",
+	})
+
+	vim.api.nvim_set_hl(0, "GrappleTitle", { fg = "#89b4fa", bold = true })
+	vim.api.nvim_set_hl(0, "GrappleNum", { fg = "#f38ba8", bold = true })
+	vim.wo[win].winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,Title:GrappleTitle"
+
+	vim.cmd("syntax match GrappleNum '^\\d\\+\\.'")
+
+	local function close_menu()
+		if vim.api.nvim_win_is_valid(win) then
+			vim.api.nvim_win_close(win, true)
+		end
+	end
+
+	vim.keymap.set("n", "q", close_menu, { buffer = buf, silent = true })
+	vim.keymap.set("n", "<Esc>", close_menu, { buffer = buf, silent = true })
+
+	vim.keymap.set("n", "<CR>", function()
+		local line = vim.fn.getline(".")
+		local idx = tonumber(line:match("^(%d+)"))
+		close_menu()
+		if idx then
+			grapple.nav(idx)
+		end
+	end, { buffer = buf, silent = true })
+
+	vim.keymap.set("n", "d", function()
+		local line_num = vim.fn.line(".")
+		if marks[line_num] then
+			local removed = table.remove(marks, line_num)
+			set_marks(marks)
+			vim.notify("Grapple: Unhooked " .. vim.fn.fnamemodify(removed.file, ":t"), vim.log.levels.INFO)
+			close_menu()
+			grapple.menu()
+		end
+	end, { buffer = buf, silent = true, desc = "Delete mark" })
+
+	vim.keymap.set("n", "C", function()
+		set_marks({})
+		vim.notify("Grapple: Cleared all hooks", vim.log.levels.INFO)
+		close_menu()
+	end, { buffer = buf, silent = true, desc = "Clear all marks" })
+end
+
+-- Keymaps
+vim.keymap.set("n", "<leader>ha", grapple.toggle, { desc = "Grapple: Toggle file" })
+vim.keymap.set("n", "<leader>hh", grapple.menu, { desc = "Grapple: Menu" })
+
+for i = 1, 5 do
+	vim.keymap.set("n", "<leader>h" .. i, function()
+		grapple.nav(i)
+	end, { desc = "Grapple: Nav " .. i })
+end
