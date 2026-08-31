@@ -9,6 +9,16 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 	end,
 })
 
+--- Auto-change cwd when entering a buffer
+vim.api.nvim_create_autocmd("BufEnter", {
+	callback = function()
+		local dir = vim.fn.expand("%:p:h")
+		if dir ~= "" and vim.fn.isdirectory(dir) == 1 then
+			vim.cmd("lcd " .. vim.fn.fnameescape(dir))
+		end
+	end,
+})
+
 --- VirtualEdit Mode (for better cursor placement)
 vim.api.nvim_create_autocmd("ModeChanged", {
 	pattern = "*",
@@ -35,6 +45,57 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 			pcall(vim.api.nvim_win_set_cursor, 0, mark)
 		end
 	end,
+})
+
+--- CursorHold diagnostics
+vim.api.nvim_create_autocmd("CursorHold", {
+	desc = "Auto-show diagnostics in float",
+	callback = function()
+		local diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })
+		if #diagnostics > 0 then
+			vim.diagnostic.open_float({
+				scope = "line",
+				focusable = false,
+				close_events = { "BufLeave", "CursorMoved", "InsertEnter", "FocusLost" },
+				border = "rounded",
+				source = "if_many",
+			})
+		end
+	end,
+})
+
+--- Completion
+vim.api.nvim_create_autocmd("LspAttach", {
+	callback = function(ev)
+		local client = vim.lsp.get_client_by_id(ev.data.client_id)
+		if client ~= nil and client:supports_method("textDocument/completion") then
+			vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
+		end
+	end,
+})
+vim.cmd("set completeopt+=noselect")
+
+--- Diagnostics config
+vim.diagnostic.config({
+	virtual_text = true,
+	underline = true,
+	severity_sort = true,
+	update_in_insert = false,
+
+	float = {
+		border = "rounded",
+		source = "if_many",
+		focusable = false,
+	},
+
+	signs = {
+		text = {
+			[vim.diagnostic.severity.ERROR] = "E",
+			[vim.diagnostic.severity.WARN] = "W",
+			[vim.diagnostic.severity.INFO] = "I",
+			[vim.diagnostic.severity.HINT] = "H",
+		},
+	},
 })
 
 --- LSP keymaps
@@ -81,57 +142,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		map("n", "<leader>for", function()
 			vim.lsp.buf.format({ async = true })
 		end, "Format buffer")
-	end,
-})
-
---- Completion
-vim.api.nvim_create_autocmd("LspAttach", {
-	callback = function(ev)
-		local client = vim.lsp.get_client_by_id(ev.data.client_id)
-		if client ~= nil and client:supports_method("textDocument/completion") then
-			vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
-		end
-	end,
-})
-vim.cmd("set completeopt+=noselect")
-
---- Diagnostics config
-vim.diagnostic.config({
-	virtual_text = true,
-	underline = true,
-	severity_sort = true,
-	update_in_insert = false,
-
-	float = {
-		border = "rounded",
-		source = "if_many",
-		focusable = false,
-	},
-
-	signs = {
-		text = {
-			[vim.diagnostic.severity.ERROR] = "E",
-			[vim.diagnostic.severity.WARN] = "W",
-			[vim.diagnostic.severity.INFO] = "I",
-			[vim.diagnostic.severity.HINT] = "H",
-		},
-	},
-})
-
---- CursorHold diagnostics
-vim.api.nvim_create_autocmd("CursorHold", {
-	desc = "Auto-show diagnostics in float",
-	callback = function()
-		local diagnostics = vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })
-		if #diagnostics > 0 then
-			vim.diagnostic.open_float({
-				scope = "line",
-				focusable = false,
-				close_events = { "BufLeave", "CursorMoved", "InsertEnter", "FocusLost" },
-				border = "rounded",
-				source = "if_many",
-			})
-		end
 	end,
 })
 
@@ -251,6 +261,19 @@ vim.keymap.set("n", "<leader>sp", function()
 	vim.wo.spell = not vim.wo.spell
 	vim.notify("Spell " .. (vim.wo.spell and "on" or "off"), vim.log.levels.INFO)
 end, { silent = true, desc = "Toggle spellcheck" })
+map("n", "<leader>ch", function()
+	vim.cmd("cd " .. vim.fn.fnameescape(vim.fn.expand("~")))
+	vim.notify("Changed cwd to home", vim.log.levels.INFO)
+end, { desc = "Change cwd to home" })
+map("n", "<leader>cp", function()
+	local dir = vim.fn.input("Change cwd to: ", vim.fn.getcwd(), "dir")
+	if dir ~= "" and vim.fn.isdirectory(dir) == 1 then
+		vim.cmd("cd " .. vim.fn.fnameescape(dir))
+		vim.notify("Changed cwd to: " .. vim.fn.fnamemodify(dir, ":~"), vim.log.levels.INFO)
+	elseif dir ~= "" then
+		vim.notify("Directory not found: " .. dir, vim.log.levels.ERROR)
+	end
+end, { desc = "Change cwd to specified directory" })
 
 --- better movement in wrapped text
 map("n", "j", function()
@@ -441,7 +464,7 @@ else
 	vim.opt.grepprg = "grep -Rn --exclude-dir=.git --exclude-dir=node_modules"
 	vim.opt.grepformat = "%f:%l:%m"
 end
-map("n", "<leader>fg", function()
+map("n", "<leader>rg", function()
 	vim.ui.input({ prompt = "Grep: " }, function(pattern)
 		if not pattern or pattern == "" then
 			return
