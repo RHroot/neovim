@@ -9,6 +9,14 @@ vim.api.nvim_create_autocmd("TextYankPost", {
 	end,
 })
 
+--- To use neovim as a pager as well
+vim.api.nvim_create_autocmd("StdinReadPost", {
+	group = vim.api.nvim_create_augroup("pager_mode", { clear = true }),
+	callback = function()
+		vim.bo.buftype = "nofile"
+	end,
+})
+
 --- Auto-change cwd when entering a buffer
 vim.api.nvim_create_autocmd("BufEnter", {
 	callback = function()
