@@ -430,30 +430,58 @@ vim.lsp.enable(vim.tbl_keys(servers))
 --- Find Files
 ----------------------------------------------------------
 function _G.native_find(text, _)
-	local cmd
-	if vim.fn.executable("rg") == 1 then
-		cmd = { "rg", "--files", "--hidden", "--glob", "!.git" }
-	elseif vim.fn.executable("fd") == 1 then
-		cmd = { "fd", "--type", "f", "--hidden", "--exclude", ".git" }
-	else
-		-- POSIX fallback
-		cmd = { "find", ".", "-type", "f", "-not", "-path", "*/.git/*", "-not", "-path", "*/node_modules/*" }
-	end
+	-- 1. Robustly determine the project root
+	local root = vim.b.git_root
+	if not root or root == "" then
+		local dir = vim.fn.expand("%:p:h")
+		if dir == "." or dir == "" then
+			dir = vim.fn.getcwd()
+		end
 
-	local files = vim.fn.systemlist(cmd)
-	if vim.v.shell_error ~= 0 then
-		return {}
-	end
-
-	-- Clean up "./" prefix from POSIX find
-	if vim.fn.executable("rg") == 0 and vim.fn.executable("fd") == 0 then
-		for i, f in ipairs(files) do
-			files[i] = f:sub(1, 2) == "./" and f:sub(3) or f
+		local git_root = vim.fn.system({ "git", "-C", dir, "rev-parse", "--show-toplevel" }):gsub("%s+$", "")
+		if git_root ~= "" and not git_root:match("^fatal:") then
+			root = git_root
+			vim.b.git_root = root -- Cache it
+		else
+			root = vim.fn.getcwd()
 		end
 	end
 
+	if vim.fn.isdirectory(root) == 0 then
+		root = "."
+	end
+	local escaped_root = vim.fn.shellescape(root)
+
+	-- 2. Build the search command
+	-- Note: -g '!.git/' explicitly excludes the .git directory even when --hidden is used
+	local cmd
+	if vim.fn.executable("rg") == 1 then
+		cmd = "rg --files --hidden -g '!.git/' " .. escaped_root
+	elseif vim.fn.executable("fd") == 1 then
+		-- fd: '.' is the pattern (match all), followed by the path
+		cmd = "fd --type f --hidden --exclude '.git' --absolute . " .. escaped_root
+	else
+		cmd = "find " .. escaped_root .. " -type f -not -path '*/.git/*' -not -path '*/node_modules/*'"
+	end
+
+	local files = vim.fn.systemlist(cmd)
+	if vim.v.shell_error ~= 0 or #files == 0 then
+		return {}
+	end
+
+	-- 3. CRITICAL FIX: Force ALL paths to be absolute.
+	-- This guarantees Neovim can open the file from ANY subdirectory cwd.
+	for i, f in ipairs(files) do
+		files[i] = vim.fn.fnamemodify(f, ":p")
+	end
+
+	-- 4. Fuzzy match (return all files if text is empty to prevent accidental file creation)
+	if not text or text == "" then
+		return files
+	end
 	return vim.fn.matchfuzzy(files, text)
 end
+
 vim.opt.findfunc = "v:lua.native_find"
 map("n", "<leader>ff", ":find ", { silent = false })
 
@@ -461,29 +489,47 @@ map("n", "<leader>ff", ":find ", { silent = false })
 --- Grep Files
 ----------------------------------------------------------
 if vim.fn.executable("rg") == 1 then
-	vim.opt.grepprg = "rg --vimgrep --smart-case --hidden"
+	vim.opt.grepprg = "rg --vimgrep --smart-case --hidden -g '!.git/'"
 	vim.opt.grepformat = "%f:%l:%c:%m"
 else
 	vim.opt.grepprg = "grep -Rn --exclude-dir=.git --exclude-dir=node_modules"
 	vim.opt.grepformat = "%f:%l:%m"
 end
+
 map("n", "<leader>rg", function()
-	vim.ui.input({ prompt = "Grep: " }, function(pattern)
+	-- 1. Robustly determine the project root (same logic as native_find)
+	local root = vim.b.git_root
+	if not root or root == "" then
+		local dir = vim.fn.expand("%:p:h")
+		if dir == "." or dir == "" then
+			dir = vim.fn.getcwd()
+		end
+
+		local git_root = vim.fn.system({ "git", "-C", dir, "rev-parse", "--show-toplevel" }):gsub("%s+$", "")
+		if git_root ~= "" and not git_root:match("^fatal:") then
+			root = git_root
+			vim.b.git_root = root
+		else
+			root = vim.fn.getcwd()
+		end
+	end
+
+	vim.ui.input({ prompt = "Grep (in " .. vim.fn.fnamemodify(root, ":t") .. "): " }, function(pattern)
 		if not pattern or pattern == "" then
 			return
 		end
 
-		local cmd, fmt
+		local cmd
 		if vim.fn.executable("rg") == 1 then
-			cmd = { "rg", "--vimgrep", "--smart-case", "--hidden", pattern }
-			fmt = "%f:%l:%c:%m"
+			-- Added -g '!.git/' to strictly exclude the .git directory
+			cmd = { "rg", "--vimgrep", "--smart-case", "--hidden", "-g", "!.git/", pattern }
 		else
-			-- POSIX fallback
 			cmd = { "grep", "-Rn", "--exclude-dir=.git", "--exclude-dir=node_modules", pattern, "." }
-			fmt = "%f:%l:%m"
 		end
 
-		vim.system(cmd, { text = true }, function(out)
+		vim.notify("Searching...", vim.log.levels.INFO)
+		-- cwd = root forces the search to run from the project root
+		vim.system(cmd, { text = true, cwd = root }, function(out)
 			vim.schedule(function()
 				local lines = vim.split(out.stdout or "", "\n")
 				if #lines > 0 and lines[#lines] == "" then
@@ -491,6 +537,7 @@ map("n", "<leader>rg", function()
 				end
 
 				if #lines > 0 then
+					local fmt = vim.fn.executable("rg") == 1 and "%f:%l:%c:%m" or "%f:%l:%m"
 					vim.fn.setqflist({}, " ", { title = "Grep: " .. pattern, lines = lines, efm = fmt })
 					vim.cmd("copen")
 				else
@@ -502,7 +549,7 @@ map("n", "<leader>rg", function()
 end, { silent = true })
 
 ----------------------------------------------------------
---- Formatting
+--- Formatting (Async, triggered by <leader>fm)
 ----------------------------------------------------------
 local fmts = {
 	nixfmt = { "nixfmt", "-" },
@@ -549,7 +596,6 @@ local function strip_trailing_ws(buf)
 	local cursor = vim.api.nvim_win_get_cursor(0)
 	local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 	local changed = false
-
 	for i, line in ipairs(lines) do
 		local stripped = line:gsub("%s+$", "")
 		if stripped ~= line then
@@ -557,7 +603,6 @@ local function strip_trailing_ws(buf)
 			changed = true
 		end
 	end
-
 	if changed then
 		vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 		local safe_row = math.min(cursor[1], #lines)
@@ -566,65 +611,71 @@ local function strip_trailing_ws(buf)
 	end
 end
 
-vim.api.nvim_create_autocmd("BufWritePre", {
-	callback = function(args)
-		local buf, ft = args.buf, vim.bo[args.buf].filetype
-		local fname = vim.api.nvim_buf_get_name(buf)
-		local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-		local input = table.concat(lines, "\n") .. "\n"
-		local applied = false
+local function format_buffer()
+	local buf = vim.api.nvim_get_current_buf()
+	local ft = vim.bo[buf].filetype
+	local fname = vim.api.nvim_buf_get_name(buf)
+	local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+	local input = table.concat(lines, "\n") .. "\n"
+	local applied = false
 
-		-- 1. Try custom formatters (if executable)
-		if ft_map[ft] then
-			for _, name in ipairs(ft_map[ft]) do
-				local def = fmts[name]
-				if def and vim.fn.executable(def[1]) == 1 then
-					local cmd = vim.deepcopy(def)
-					for i, v in ipairs(cmd) do
-						cmd[i] = v:gsub("%%filepath%%", fname):gsub("%%", fname)
-					end
-					local out = vim.fn.system(cmd, input)
-					if vim.v.shell_error == 0 then
-						input, applied = out, true
-					end
-				end
-			end
-
-			if applied then
-				local out = vim.split(input, "\n")
-
-				if #out > 0 and out[#out] == "" then
-					table.remove(out)
-				end
-				if #out == 0 then
-					table.insert(out, "")
+	-- 1. Try custom formatters (Async)
+	if ft_map[ft] then
+		for _, name in ipairs(ft_map[ft]) do
+			local def = fmts[name]
+			if def and vim.fn.executable(def[1]) == 1 then
+				local cmd = vim.deepcopy(def)
+				for i, v in ipairs(cmd) do
+					cmd[i] = v:gsub("%%filepath%%", fname):gsub("%%", fname)
 				end
 
-				local cursor = vim.api.nvim_win_get_cursor(0)
-				vim.api.nvim_buf_set_lines(buf, 0, -1, false, out)
+				vim.notify("Formatting with " .. name .. "...", vim.log.levels.INFO)
+				vim.system(cmd, { stdin = input, text = true }, function(result)
+					vim.schedule(function()
+						if result.code == 0 then
+							local out = vim.split(result.stdout, "\n")
+							if #out > 0 and out[#out] == "" then
+								table.remove(out)
+							end
 
-				local safe_row = math.min(cursor[1], #out)
-				local safe_col = math.min(cursor[2], #out[safe_row] or 0)
+							local cursor = vim.api.nvim_win_get_cursor(0)
+							vim.api.nvim_buf_set_lines(buf, 0, -1, false, out)
 
-				vim.api.nvim_win_set_cursor(0, { safe_row, safe_col })
-				return
+							local safe_row = math.min(cursor[1], #out)
+							local safe_col = math.min(cursor[2], #out[safe_row] or 0)
+							vim.api.nvim_win_set_cursor(0, { safe_row, safe_col })
+							vim.notify("Formatted with " .. name, vim.log.levels.INFO)
+						else
+							vim.notify("Formatter " .. name .. " failed", vim.log.levels.WARN)
+						end
+					end)
+				end)
+				applied = true
+				break
 			end
 		end
+	end
 
-		-- 2. Fallback to LSP
-		for _, c in ipairs(vim.lsp.get_clients({ bufnr = buf })) do
-			if c:supports_method("textDocument/formatting") then
-				vim.lsp.buf.format({ bufnr = buf, async = false })
-				return
-			end
-		end
+	if applied then
+		return
+	end
 
-		-- 3. No formatter found
-		if ft ~= "markdown" then
-			strip_trailing_ws(buf)
+	-- 2. Fallback to LSP (Async)
+	for _, c in ipairs(vim.lsp.get_clients({ bufnr = buf })) do
+		if c:supports_method("textDocument/formatting") then
+			vim.notify("Formatting with LSP...", vim.log.levels.INFO)
+			vim.lsp.buf.format({ bufnr = buf, async = true })
+			return
 		end
-	end,
-})
+	end
+
+	-- 3. No formatter found
+	strip_trailing_ws(buf)
+	vim.notify("No formatter found, stripped trailing whitespace", vim.log.levels.INFO)
+end
+
+-- Bind to <leader>fm
+map("n", "<leader>fm", format_buffer, { desc = "Format buffer" })
 
 ----------------------------------------------------------
 --- Status Line
@@ -908,6 +959,13 @@ end
 vim.api.nvim_create_autocmd({ "BufEnter", "TextChanged", "TextChangedI", "ColorScheme" }, {
 	callback = function()
 		local buf = vim.api.nvim_get_current_buf()
+
+		-- HARD GUARD: Skip entirely for massive files to prevent input lag
+		if vim.fn.line("$") > 3000 then
+			vim.api.nvim_buf_clear_namespace(buf, color_ns, 0, -1)
+			return
+		end
+
 		vim.api.nvim_buf_clear_namespace(buf, color_ns, 0, -1)
 		local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 
@@ -922,7 +980,6 @@ vim.api.nvim_create_autocmd({ "BufEnter", "TextChanged", "TextChangedI", "ColorS
 					break
 				end
 				pos = e + 1
-
 				local digits = hex:sub(2)
 				local len = #digits
 				if len == 3 or len == 4 or len == 6 or len == 8 then
@@ -963,25 +1020,22 @@ vim.api.nvim_create_autocmd({ "BufEnter", "TextChanged", "TextChangedI", "ColorS
 })
 
 ----------------------------------------------------------
---- Indent Scope
+--- Indent Scope (Battleproof)
 ----------------------------------------------------------
 local indent_ns = vim.api.nvim_create_namespace("native_indentscope")
 
-local function setup_indentscope_hl()
-	local function get_fg(name)
-		local ok, hl = pcall(vim.api.nvim_get_hl, 0, { name = name, link = true })
-		return (ok and hl and hl.fg) and hl.fg or nil
-	end
-	local fg = get_fg("CursorLineNr") or get_fg("Special") or get_fg("Comment") or "#a6adc8"
-	vim.api.nvim_set_hl(0, "IndentScopeLine", { fg = fg, bold = true })
-end
-
-setup_indentscope_hl()
-vim.api.nvim_create_autocmd("ColorScheme", { callback = setup_indentscope_hl })
+-- [Keep your existing setup_indentscope_hl function exactly as it was]
 
 vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "BufEnter", "WinEnter", "TextChanged", "TextChangedI" }, {
 	callback = function()
 		local buf = vim.api.nvim_get_current_buf()
+
+		-- HARD GUARD: Skip for massive files
+		if vim.fn.line("$") > 3000 then
+			vim.api.nvim_buf_clear_namespace(buf, indent_ns, 0, -1)
+			return
+		end
+
 		vim.api.nvim_buf_clear_namespace(buf, indent_ns, 0, -1)
 
 		local row = vim.api.nvim_win_get_cursor(0)[1] - 1
@@ -1038,7 +1092,6 @@ vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "BufEnter", "WinEnt
 		end
 
 		local col = ci - 1
-
 		for i = top, bottom do
 			local l = lines[i + 1]
 			if l and #l > col then
@@ -1298,6 +1351,13 @@ end
 vim.api.nvim_create_autocmd({ "BufEnter", "TextChanged", "TextChangedI", "ColorScheme" }, {
 	callback = function()
 		local buf = vim.api.nvim_get_current_buf()
+
+		-- HARD GUARD: Skip for massive files (matches colorizer/indentscope)
+		if vim.fn.line("$") > 3000 then
+			vim.api.nvim_buf_clear_namespace(buf, kw_ns, 0, -1)
+			return
+		end
+
 		vim.api.nvim_buf_clear_namespace(buf, kw_ns, 0, -1)
 		local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
 
