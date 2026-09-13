@@ -673,8 +673,6 @@ local function format_buffer()
 	strip_trailing_ws(buf)
 	vim.notify("No formatter found, stripped trailing whitespace", vim.log.levels.INFO)
 end
-
--- Bind to <leader>fm
 map("n", "<leader>fm", format_buffer, { desc = "Format buffer" })
 
 ----------------------------------------------------------
