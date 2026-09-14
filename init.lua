@@ -581,7 +581,6 @@ local ft_map = {
 	less = { "prettierd" },
 	json = { "prettierd" },
 	yaml = { "prettierd" },
-	toml = { "prettierd" },
 	jsonc = { "prettierd" },
 	svelte = { "prettierd" },
 	javascript = { "prettierd" },
