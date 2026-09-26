@@ -363,6 +363,18 @@ local servers = {
 		root_markers = { ".marksman.toml", ".git" },
 		cmd_env = { DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1" },
 	},
+	gopls = {
+		cmd = { "gopls" },
+		filetypes = { "go", "gomod", "gowork", "gotmpl" },
+		root_markers = { "go.mod", "go.work", ".git" },
+		settings = {
+			gopls = {
+				analyses = { unusedparams = true },
+				staticcheck = true,
+				gofumpt = true,
+			},
+		},
+	},
 	lua_ls = {
 		cmd = { "lua-language-server" },
 		filetypes = { "lua" },
@@ -552,6 +564,7 @@ end, { silent = true })
 --- Formatting (Async, triggered by <leader>fm)
 ----------------------------------------------------------
 local fmts = {
+	gofmt = { "gofmt" },
 	nixfmt = { "nixfmt", "-" },
 	stylua = { "stylua", "-" },
 	mdformat = { "mdformat", "-" },
@@ -569,6 +582,9 @@ local ft_map = {
 	nix = { "nixfmt" },
 	lua = { "stylua" },
 	bash = { "shfmt" },
+	go = { "gofmt" },
+	gomod = { "gofmt" },
+	gowork = { "gofmt" },
 	rust = { "rustfmt" },
 	c = { "clang-format" },
 	cpp = { "clang-format" },
