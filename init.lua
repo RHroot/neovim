@@ -328,10 +328,10 @@ map("v", "J", ":m '>+1<CR>gv=gv", { noremap = true, silent = true })
 ----------------------------------------------------------
 --- Colorscheme
 ----------------------------------------------------------
--- if pcall(vim.cmd.colorscheme, "unokai") then
-if pcall(vim.cmd.colorscheme, "catppuccin") then
-	vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
-end
+-- if pcall(vim.cmd.colorscheme, "catppuccin") then
+-- 	vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
+-- end
+vim.cmd.colorscheme("Violet")
 
 ----------------------------------------------------------
 --- LSP
